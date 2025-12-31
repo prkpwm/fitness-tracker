@@ -1,0 +1,265 @@
+<div class="daily-dashboard">
+  <header class="header">
+    <h1><i class="icon">💪</i> FITNESS TRACKER</h1>
+    <div class="date">{{today | date:'fullDate'}}</div>
+  </header>
+
+  <div class="date-selector-header">
+    <div class="date-selector">
+      <button class="date-nav" (click)="changeDate(-1)">◀</button>
+      <input type="date" [(ngModel)]="selectedDateString" (change)="onDateChange()" class="date-input">
+      <button class="date-nav" (click)="changeDate(1)">▶</button>
+    </div>
+    <div class="dashboard-date text-center">{{selectedDate | date:'EEEE, MMMM d, y'}}</div>
+  </div>
+
+  @if (currentData) {
+  <div class="dashboard">
+    <div class="dashboard-section">
+      <div class="dashboard-header">
+        <h2 class="section-title">📊 Today's Dashboard</h2>
+      </div>
+      
+      <div class="primary-stats">
+        <div class="primary-card calories-card">
+          <div class="card-content">
+            <div class="stat-header">
+              <span class="stat-icon">🔥</span>
+              <span class="stat-title">Calories</span>
+            </div>
+            <div class="stat-main">
+              <span class="stat-value">{{currentData.daily_summary.total_intake_calories}}</span>
+              <span class="stat-unit">/ {{currentData.user_profile.goal_calories}}</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress calories-progress" [style.width.%]="getCalorieProgress()"></div>
+              </div>
+              <span class="progress-text">{{getCalorieProgress()}}% of goal</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="primary-card protein-card">
+          <div class="card-content">
+            <div class="stat-header">
+              <span class="stat-icon">🥩</span>
+              <span class="stat-title">Protein</span>
+            </div>
+            <div class="stat-main">
+              <span class="stat-value">{{currentData.daily_summary.total_protein_g}}</span>
+              <span class="stat-unit">g / {{currentData.user_profile.maintenance_protein_target_g}}g</span>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar">
+                <div class="progress protein-progress" [style.width.%]="getProteinProgress()"></div>
+              </div>
+              <span class="progress-text">{{getProteinProgress()}}% of target</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="primary-card status-card" [class]="'status-' + getStatusClass()">
+          <div class="card-content">
+            <div class="stat-header">
+              <span class="stat-icon">{{getStatusEmoji()}}</span>
+              <span class="stat-title">Status</span>
+            </div>
+            <div class="stat-main">
+              <span class="stat-value">{{currentData.daily_summary.net_calories}}</span>
+              <span class="stat-unit">net cal</span>
+            </div>
+            <div class="status-label">{{getStatusText()}}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="secondary-stats">
+        <div class="stat-tile">
+          <div class="tile-icon">⚡</div>
+          <div class="tile-value">{{currentData.exercise.total_burned_calories}}</div>
+          <div class="tile-label">Burned</div>
+        </div>
+        
+        <div class="stat-tile">
+          <div class="tile-icon">⚖️</div>
+          <div class="tile-value">{{getBMI()}}</div>
+          <div class="tile-label">BMI</div>
+          <div class="tile-sublabel">{{getBMICategory()}}</div>
+        </div>
+        
+        <div class="stat-tile">
+          <div class="tile-icon">🍞</div>
+          <div class="tile-value">{{currentData.daily_summary.total_carbs_g}}g</div>
+          <div class="tile-label">Carbs</div>
+        </div>
+        
+        <div class="stat-tile water-tile">
+          <div class="tile-icon">💧</div>
+          <div class="tile-value">{{getWaterIntake()}}L</div>
+          <div class="tile-label">Water</div>
+          <div class="mini-progress">
+            <div class="mini-bar" [style.width.%]="getWaterProgress()"></div>
+          </div>
+        </div>
+        
+        <div class="stat-tile streak-tile">
+          <div class="tile-icon">🔥</div>
+          <div class="tile-value">{{getStreak()}}</div>
+          <div class="tile-label">Day Streak</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-section">
+      <div class="overview-grid">
+        <div class="overview-card goals">
+          <h3>🎯 Daily Goals</h3>
+          <div class="goal-progress">
+            <div class="goal-item">
+              <span>Calories: {{currentData.daily_summary.total_intake_calories}}/{{currentData.user_profile.goal_calories}}</span>
+              <div class="mini-progress">
+                <div class="mini-bar" [style.width.%]="getCalorieProgress()"></div>
+              </div>
+            </div>
+            <div class="goal-item">
+              <span>Protein: {{currentData.daily_summary.total_protein_g}}/{{currentData.user_profile.maintenance_protein_target_g}}g</span>
+              <div class="mini-progress">
+                <div class="mini-bar" [style.width.%]="getProteinProgress()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-card summary">
+          <h3>📈 Today's Summary</h3>
+          <div class="summary-stats">
+            <div class="summary-item">
+              <span class="summary-label">Total Intake:</span>
+              <span class="summary-value">{{currentData.daily_summary.total_intake_calories}} cal</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Exercise Burned:</span>
+              <span class="summary-value">{{currentData.exercise.total_burned_calories}} cal</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Net Balance:</span>
+              <span class="summary-value" [class]="getStatusClass()">{{currentData.daily_summary.net_calories}} cal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section">
+      <div class="section-buttons">
+        <button class="section-toggle" (click)="showDetails = !showDetails">
+          {{showDetails ? '▼' : '▶'}} View Details (Food & Exercise)
+        </button>
+        <button class="section-toggle json-toggle" (click)="showJson = !showJson">
+          {{showJson ? '▼' : '▶'}} View JSON Data
+        </button>
+      </div>
+      
+      @if (showJson) {
+      <div class="json-viewer">
+        <div class="json-card">
+          <div class="json-header">
+            <h3>📄 Raw JSON Data</h3>
+            <div class="json-actions">
+              <button class="copy-btn" (click)="copyJson()">📋 Copy</button>
+              <button class="export-btn" (click)="exportData()">📤 Export</button>
+              <button class="import-btn" (click)="importData()">📥 Import</button>
+              <button class="import-all-btn" (click)="importAllData()">📂 Import All</button>
+            </div>
+          </div>
+          <pre class="json-content">{{getFormattedJson()}}</pre>
+        </div>
+      </div>
+      }
+      
+      @if (showDetails) {
+      <div class="content-grid">
+        <div class="card food-card">
+          <div class="card-header">
+            <h3><i class="icon">🍽️</i> Food Diary</h3>
+            <button class="add-btn" (click)="showAddFood = !showAddFood">+</button>
+          </div>
+          
+          @if (showAddFood) {
+          <div class="add-form">
+            <input [(ngModel)]="newFood.item" placeholder="Food item" class="input">
+            <input [(ngModel)]="newFood.calories" type="number" placeholder="Calories" class="input">
+            <input [(ngModel)]="newFood.protein_g" type="number" placeholder="Protein (g)" class="input">
+            <button (click)="addFood()" class="btn-primary">Add Food</button>
+          </div>
+          }
+          
+          <div class="food-list">
+            @for (food of currentData.food_diary; track $index) {
+            <div class="food-item">
+              <div class="food-info">
+                <div class="food-name">{{food.item}}</div>
+                <div class="food-details">{{food.calories}} cal • {{food.protein_g}}g protein</div>
+              </div>
+              <button class="delete-btn" (click)="removeFood($index)">×</button>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="card exercise-card">
+          <div class="card-header">
+            <h3><i class="icon">🏃</i> Exercise Log</h3>
+            <button class="add-btn" (click)="showAddExercise = !showAddExercise">+</button>
+          </div>
+          
+          @if (showAddExercise) {
+          <div class="add-form">
+            <select [(ngModel)]="newExercise.type" class="input">
+              <option value="cardio">Cardio</option>
+              <option value="strength">Strength</option>
+            </select>
+            <input [(ngModel)]="newExercise.duration" type="number" placeholder="Duration (min)" class="input">
+            <input [(ngModel)]="newExercise.calories" type="number" placeholder="Calories burned" class="input">
+            <button (click)="addExercise()" class="btn-primary">Add Exercise</button>
+          </div>
+          }
+          
+          <div class="exercise-list">
+            <div class="exercise-item">
+              <div class="exercise-type">🏃 {{currentData.exercise.cardio.type}}</div>
+              <div class="exercise-details">
+                {{currentData.exercise.cardio.distance_mi}} mi • 
+                {{currentData.exercise.cardio.duration_min}} min • 
+                {{currentData.exercise.cardio.calories_burned}} cal
+              </div>
+            </div>
+            
+            <div class="exercise-item">
+              <div class="exercise-type">💪 {{currentData.exercise.strength_training.target_area}}</div>
+              <div class="exercise-details">
+                {{currentData.exercise.strength_training.duration_min}} min • 
+                {{currentData.exercise.strength_training.intensity}} • 
+                {{currentData.exercise.strength_training.calories_burned}} cal
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  @if (!currentData) {
+  <div class="no-data">
+    <div class="no-data-card">
+      <div class="no-data-icon">📅</div>
+      <h2>No Data Found</h2>
+      <p>No fitness data available for {{selectedDate | date:'EEEE, MMMM d, y'}}</p>
+      <button class="btn-create" (click)="createEmptyData()">Create New Entry</button>
+    </div>
+  </div>
+  }
+</div>

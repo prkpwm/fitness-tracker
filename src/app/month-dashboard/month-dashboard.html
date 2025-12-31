@@ -47,7 +47,7 @@
 
     <div class="calendar-grid">
       @for (day of calendarDays; track $index) {
-        <div class="calendar-day" [class]="day.status" [class.empty]="day.isEmpty">
+        <div class="calendar-day" [class]="day.status" [class.empty]="day.isEmpty" (click)="onDateClick(day)" [class.clickable]="!day.isEmpty">
           @if (!day.isEmpty) {
             <div class="day-number">{{day.day}}</div>
             @if (day.hasData) {

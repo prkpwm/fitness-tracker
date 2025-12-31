@@ -218,6 +218,15 @@
   background: #ccc;
 }
 
+.calendar-day.clickable {
+  cursor: pointer;
+}
+
+.calendar-day.clickable:hover {
+  background: #f8f9fa;
+  transform: scale(1.02);
+}
+
 @media (max-width: 768px) {
   .month-stats {
     grid-template-columns: repeat(2, 1fr);

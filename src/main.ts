@@ -1,7 +1,7 @@
 import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
-import { LayoutComponent } from './app/layout/layout';
+import { AppComponent } from './app/app';
 
-bootstrapApplication(LayoutComponent, appConfig)
+bootstrapApplication(AppComponent, appConfig)
   .catch((err) => console.error(err));

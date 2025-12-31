@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DatabaseService } from '../services/database.service';
 import { FitnessData } from '../models/fitness.model';
 
@@ -35,7 +36,7 @@ export class MonthDashboardComponent implements OnInit {
   };
   calendarDays: any[] = [];
 
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService, private router: Router) {}
 
   ngOnInit() {
     this.loadMonthlyData();
@@ -46,12 +47,21 @@ export class MonthDashboardComponent implements OnInit {
     const month = this.currentMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
+    // Reset data and stats
     this.monthlyData = [];
+    this.monthlyStats = {
+      totalDays: 0,
+      activeDays: 0,
+      avgCalories: 0,
+      avgProtein: 0,
+      totalBurned: 0,
+      bestDay: '',
+      worstDay: ''
+    };
     let loadedDays = 0;
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       
       this.databaseService.getFitnessDataByDate(dateStr).subscribe({
         next: (data) => {
@@ -118,7 +128,8 @@ export class MonthDashboardComponent implements OnInit {
     
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+      // Create date string in YYYY-MM-DD format
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayData = this.monthlyData.find(data => data.date === dateStr);
       
       this.calendarDays.push({
@@ -139,7 +150,7 @@ export class MonthDashboardComponent implements OnInit {
   }
 
   changeMonth(direction: number) {
-    this.currentMonth.setMonth(this.currentMonth.getMonth() + direction);
+    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + direction, 1);
     this.loadMonthlyData();
   }
 
@@ -149,5 +160,16 @@ export class MonthDashboardComponent implements OnInit {
 
   getCompletionRate(): number {
     return Math.round((this.monthlyStats.activeDays / this.monthlyStats.totalDays) * 100);
+  }
+
+  onDateClick(day: any) {
+    if (!day.isEmpty) {
+      const year = this.currentMonth.getFullYear();
+      const month = this.currentMonth.getMonth();
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`;
+      
+      // Navigate to daily view with the selected date
+      this.router.navigate(['/daily'], { queryParams: { date: dateStr } });
+    }
   }
 }
