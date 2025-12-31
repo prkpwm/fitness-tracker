@@ -1,0 +1,81 @@
+<div class="month-dashboard">
+  <div class="month-header">
+    <button class="month-nav" (click)="changeMonth(-1)">◀</button>
+    <h2 class="month-title">📅 {{getMonthName()}}</h2>
+    <button class="month-nav" (click)="changeMonth(1)">▶</button>
+  </div>
+
+  <div class="month-stats">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value">{{monthlyStats.activeDays}}/{{monthlyStats.totalDays}}</div>
+      <div class="stat-label">Active Days</div>
+      <div class="completion-bar">
+        <div class="completion-fill" [style.width.%]="getCompletionRate()"></div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-value">{{monthlyStats.avgCalories}}</div>
+      <div class="stat-label">Avg Calories</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🥩</div>
+      <div class="stat-value">{{monthlyStats.avgProtein}}g</div>
+      <div class="stat-label">Avg Protein</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-value">{{monthlyStats.totalBurned}}</div>
+      <div class="stat-label">Total Burned</div>
+    </div>
+  </div>
+
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="day-header">Sun</div>
+      <div class="day-header">Mon</div>
+      <div class="day-header">Tue</div>
+      <div class="day-header">Wed</div>
+      <div class="day-header">Thu</div>
+      <div class="day-header">Fri</div>
+      <div class="day-header">Sat</div>
+    </div>
+
+    <div class="calendar-grid">
+      @for (day of calendarDays; track $index) {
+        <div class="calendar-day" [class]="day.status" [class.empty]="day.isEmpty">
+          @if (!day.isEmpty) {
+            <div class="day-number">{{day.day}}</div>
+            @if (day.hasData) {
+              <div class="day-calories">{{day.data.daily_summary.total_intake_calories}}</div>
+              <div class="day-indicator" [class]="day.status"></div>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot deficit"></div>
+      <span>Deficit</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot maintenance"></div>
+      <span>Maintenance</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot surplus"></div>
+      <span>Surplus</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot no-data"></div>
+      <span>No Data</span>
+    </div>
+  </div>
+</div>

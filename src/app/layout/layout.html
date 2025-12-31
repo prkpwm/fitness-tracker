@@ -1,0 +1,14 @@
+<div class="layout-container">
+  <nav class="nav-tabs">
+    <a routerLink="/daily" class="nav-tab" [class.active]="isActive('daily')">
+      📊 Daily View
+    </a>
+    <a routerLink="/monthly" class="nav-tab" [class.active]="isActive('monthly')">
+      📅 Monthly View
+    </a>
+  </nav>
+  
+  <div class="content">
+    <router-outlet></router-outlet>
+  </div>
+</div>
