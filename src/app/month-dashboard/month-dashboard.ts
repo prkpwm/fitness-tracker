@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DatabaseService } from '../services/database.service';
 import { FitnessData } from '../models/fitness.model';
 
@@ -36,10 +36,15 @@ export class MonthDashboardComponent implements OnInit {
   };
   calendarDays: any[] = [];
 
-  constructor(private databaseService: DatabaseService, private router: Router) {}
+  constructor(private databaseService: DatabaseService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.loadMonthlyData();
+    this.route.queryParams.subscribe(params => {
+      if (params['year'] && params['month'] !== undefined) {
+        this.currentMonth = new Date(parseInt(params['year']), parseInt(params['month']), 1);
+      }
+      this.loadMonthlyData();
+    });
   }
 
   loadMonthlyData() {

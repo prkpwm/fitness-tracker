@@ -1,0 +1,72 @@
+<div class="year-dashboard">
+  <div class="year-header">
+    <button class="year-nav" (click)="changeYear(-1)">◀</button>
+    <h2 class="year-title">📅 {{currentYear}}</h2>
+    <button class="year-nav" (click)="changeYear(1)">▶</button>
+  </div>
+
+  <div class="year-stats">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value">{{yearlyStats.totalActiveDays}}</div>
+      <div class="stat-label">Active Days</div>
+      <div class="completion-bar">
+        <div class="completion-fill" [style.width.%]="yearlyStats.completionRate"></div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-value">{{yearlyStats.avgCalories}}</div>
+      <div class="stat-label">Avg Calories</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🥩</div>
+      <div class="stat-value">{{yearlyStats.avgProtein}}g</div>
+      <div class="stat-label">Avg Protein</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-value">{{yearlyStats.totalBurned}}</div>
+      <div class="stat-label">Total Burned</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-value">{{yearlyStats.bestMonth}}</div>
+      <div class="stat-label">Best Month</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-value">{{yearlyStats.completionRate}}%</div>
+      <div class="stat-label">Completion</div>
+    </div>
+  </div>
+
+  <div class="months-grid">
+    @for (month of monthsData; track month.month) {
+      <div class="month-card" [class]="month.status" (click)="onMonthClick(month.month)">
+        <div class="month-name">{{month.name}}</div>
+        <div class="month-stats">
+          <div class="month-stat">
+            <span class="stat-number">{{month.activeDays}}</span>
+            <span class="stat-text">days</span>
+          </div>
+          <div class="month-stat">
+            <span class="stat-number">{{month.avgCalories}}</span>
+            <span class="stat-text">cal</span>
+          </div>
+        </div>
+        <div class="month-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="month.completionRate"></div>
+          </div>
+          <span class="progress-text">{{month.completionRate}}%</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>
