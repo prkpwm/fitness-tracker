@@ -10,9 +10,10 @@ export interface FoodItem {
   calories: number;
   protein_g: number;
   carbs_g: number;
+  fat_g: number;
 }
 
-export interface Cardio {
+export interface CardioSession {
   type: string;
   distance_mi: number;
   duration_min: number;
@@ -20,31 +21,39 @@ export interface Cardio {
 }
 
 export interface StrengthTraining {
-  target_area: string;
+  target: string;
   duration_min: number;
   calories_burned: number;
-  intensity: string;
 }
 
-export interface Exercise {
-  cardio: Cardio;
-  strength_training: StrengthTraining;
+export interface ExerciseSummary {
+  cardio_session_1?: CardioSession;
+  cardio_session_2?: CardioSession;
+  strength_training?: StrengthTraining;
   total_burned_calories: number;
 }
 
-export interface DailySummary {
+export interface DailyTotalStats {
   total_intake_calories: number;
   total_burned_calories: number;
   net_calories: number;
   total_protein_g: number;
   total_carbs_g: number;
-  status: string;
+  total_fat_g: number;
+  protein_per_kg: number;
+}
+
+export interface AIEvaluation {
+  muscle_maintenance: string;
+  weight_loss_status: string;
+  recommendation: string;
 }
 
 export interface FitnessData {
   date: string;
   user_profile: UserProfile;
   food_diary: FoodItem[];
-  exercise: Exercise;
-  daily_summary: DailySummary;
+  exercise_summary: ExerciseSummary;
+  daily_total_stats: DailyTotalStats;
+  ai_evaluation: AIEvaluation;
 }

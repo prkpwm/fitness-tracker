@@ -21,11 +21,15 @@ export class DailyDashboardComponent implements OnInit {
   showAddExercise = false;
   showDetails = false;
   showJson = false;
-  
-  newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0 };
+  showJsonImport = false;
+  jsonTextArea = '';
+  editingWeight = false;
+  tempWeight = 0;
+
+  newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
   newExercise = { type: 'cardio', duration: 0, calories: 0 };
 
-  constructor(private databaseService: DatabaseService, private route: ActivatedRoute) {}
+  constructor(private databaseService: DatabaseService, private route: ActivatedRoute) { }
 
   ngOnInit() {
     // Check for date query parameter
@@ -55,7 +59,7 @@ export class DailyDashboardComponent implements OnInit {
 
   loadDataForDate() {
     const dateStr = this.formatDateForInput(this.selectedDate);
-    
+
     this.databaseService.getFitnessDataByDate(dateStr).subscribe({
       next: (data) => {
         this.currentData = data;
@@ -69,18 +73,18 @@ export class DailyDashboardComponent implements OnInit {
   }
 
   getCalorieProgress(): number {
-    if (!this.currentData) return 0;
-    return parseFloat(Math.min((this.currentData.daily_summary.total_intake_calories / this.currentData.user_profile.goal_calories) * 100, 100).toFixed(2));
+    if (!this.currentData?.daily_total_stats) return 0;
+    return parseFloat(Math.min((this.currentData.daily_total_stats.total_intake_calories / this.currentData.user_profile.goal_calories) * 100, 100).toFixed(2));
   }
 
   getProteinProgress(): number {
-    if (!this.currentData) return 0;
-    return parseFloat(Math.min((this.currentData.daily_summary.total_protein_g / this.currentData.user_profile.maintenance_protein_target_g) * 100, 100).toFixed(2));
+    if (!this.currentData?.daily_total_stats) return 0;
+    return parseFloat(Math.min((this.currentData.daily_total_stats.total_protein_g / this.currentData.user_profile.maintenance_protein_target_g) * 100, 100).toFixed(2));
   }
 
   getStatusClass(): string {
-    if (!this.currentData) return '';
-    const netCal = this.currentData.daily_summary.net_calories;
+    if (!this.currentData?.daily_total_stats) return '';
+    const netCal = this.currentData.daily_total_stats.net_calories;
     if (netCal < 0) return 'deficit';
     if (netCal > 200) return 'surplus';
     return 'maintenance';
@@ -127,6 +131,88 @@ export class DailyDashboardComponent implements OnInit {
 
   getStreak(): number {
     return 7;
+  }
+
+  getCarbsRecommendation(): string {
+    if (!this.currentData) return '';
+    const weight = this.currentData.user_profile.weight_kg;
+    const recommended = Math.round(weight * 2);
+    return `${recommended}g recommended`;
+  }
+
+  getFatRecommendation(): string {
+    if (!this.currentData) return '';
+    const weight = this.currentData.user_profile.weight_kg;
+    const recommended = Math.round(weight * 0.8);
+    return `${recommended}g recommended`;
+  }
+
+  getCarbsStatus(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+
+    const totalCals = this.currentData.daily_total_stats.total_intake_calories;
+    if (totalCals === 0) return 'normal-intake';
+
+    const carbsGrams = this.currentData.daily_total_stats.total_carbs_g;
+    // Research: Carbs should be 45-65% of total calories. 1g Carb = 4 kcal.
+    const carbsCalories = carbsGrams * 4;
+    const carbsPercentage = (carbsCalories / totalCals) * 100;
+
+    if (carbsPercentage < 45) return 'low-intake';
+    if (carbsPercentage > 65) return 'high-intake';
+    return 'normal-intake';
+  }
+
+  getFatStatus(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+
+    const totalCals = this.currentData.daily_total_stats.total_intake_calories;
+    if (totalCals === 0) return 'normal-intake';
+
+    const fatGrams = this.currentData.daily_total_stats.total_fat_g;
+    // Research: Fats should be 20-35% of total calories. 1g Fat = 9 kcal.
+    const fatCalories = fatGrams * 9;
+    const fatPercentage = (fatCalories / totalCals) * 100;
+
+    if (fatPercentage < 20) return 'low-intake';
+    if (fatPercentage > 35) return 'high-intake';
+    return 'normal-intake';
+  }
+
+  getCarbsDescription(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+    const status = this.getCarbsStatus();
+    if (status === 'low-intake') return 'Too low - increase carbs';
+    if (status === 'high-intake') return 'Too high - reduce carbs';
+    return 'Optimal range (45-65)';
+  }
+
+  getFatDescription(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+    const status = this.getFatStatus();
+    if (status === 'low-intake') return 'Too low - increase fats';
+    if (status === 'high-intake') return 'Too high - reduce fats';
+    return 'Optimal range (20-35)';
+  }
+
+  getCarbsPercentage(): string {
+    if (!this.currentData?.daily_total_stats) return '0%';
+    const totalCals = this.currentData.daily_total_stats.total_intake_calories;
+    if (totalCals === 0) return '0%';
+    const carbsGrams = this.currentData.daily_total_stats.total_carbs_g;
+    const carbsCalories = carbsGrams * 4;
+    const percentage = (carbsCalories / totalCals) * 100;
+    return `${percentage.toFixed(1)}%`;
+  }
+
+  getFatPercentage(): string {
+    if (!this.currentData?.daily_total_stats) return '0%';
+    const totalCals = this.currentData.daily_total_stats.total_intake_calories;
+    if (totalCals === 0) return '0%';
+    const fatGrams = this.currentData.daily_total_stats.total_fat_g;
+    const fatCalories = fatGrams * 9;
+    const percentage = (fatCalories / totalCals) * 100;
+    return `${percentage.toFixed(1)}%`;
   }
 
   getFormattedJson(): string {
@@ -184,57 +270,62 @@ export class DailyDashboardComponent implements OnInit {
     input.click();
   }
 
-  importAllData() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.multiple = true;
-    input.onchange = (event: any) => {
-      const files = Array.from(event.target.files);
-      let imported = 0;
-      let total = files.length;
-      
-      files.forEach((file: any) => {
-        const reader = new FileReader();
-        reader.onload = (e: any) => {
-          try {
-            const data = JSON.parse(e.target.result);
-            this.databaseService.createFitnessData(data).subscribe({
-              next: () => {
-                imported++;
-                if (imported === total) {
-                  alert(`Successfully imported ${imported} files!`);
-                  this.loadDataForDate();
-                }
-              },
-              error: (err) => {
-                console.error('Error importing file:', err);
-                imported++;
-                if (imported === total) {
-                  alert(`Import completed. Some files may have failed.`);
-                  this.loadDataForDate();
-                }
-              }
-            });
-          } catch (error) {
-            imported++;
-            if (imported === total) {
-              alert(`Import completed. Some files were invalid.`);
-              this.loadDataForDate();
-            }
-          }
-        };
-        reader.readAsText(file);
+  startEditWeight() {
+    this.editingWeight = true;
+    this.tempWeight = this.currentData?.user_profile.weight_kg || 0;
+  }
+
+  saveWeight() {
+    if (this.currentData && this.tempWeight > 0) {
+      this.currentData.user_profile.weight_kg = this.tempWeight;
+      this.updateSummary();
+      this.databaseService.createFitnessData(this.currentData).subscribe({
+        next: (data) => {
+          this.currentData = data;
+          this.editingWeight = false;
+        },
+        error: (err) => {
+          console.error('Error updating weight:', err);
+        }
       });
-    };
-    input.click();
+    }
+  }
+
+  cancelEditWeight() {
+    this.editingWeight = false;
+    this.tempWeight = 0;
+  }
+
+  importJsonFromText() {
+    if (!this.jsonTextArea.trim()) {
+      alert('Please enter JSON data');
+      return;
+    }
+
+    try {
+      const data = JSON.parse(this.jsonTextArea);
+      this.databaseService.createFitnessData(data).subscribe({
+        next: (savedData) => {
+          this.currentData = savedData;
+          this.jsonTextArea = '';
+          this.showJsonImport = false;
+          alert('JSON data imported successfully!');
+        },
+        error: (err) => {
+          console.error('Error importing JSON:', err);
+          alert('Error importing JSON data');
+        }
+      });
+    } catch (error) {
+      alert('Invalid JSON format');
+    }
   }
 
   addFood() {
     if (this.newFood.item && this.newFood.calories > 0 && this.currentData) {
-      this.currentData.food_diary.push({...this.newFood});
+      this.currentData.food_diary.push({ ...this.newFood });
       this.updateSummary();
-      
+
       this.databaseService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
@@ -243,8 +334,8 @@ export class DailyDashboardComponent implements OnInit {
           console.error('Error updating data:', err);
         }
       });
-      
-      this.newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0 };
+
+      this.newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
       this.showAddFood = false;
     }
   }
@@ -253,7 +344,7 @@ export class DailyDashboardComponent implements OnInit {
     if (this.currentData) {
       this.currentData.food_diary.splice(index, 1);
       this.updateSummary();
-      
+
       this.databaseService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
@@ -270,16 +361,19 @@ export class DailyDashboardComponent implements OnInit {
   }
 
   updateSummary() {
-    if (!this.currentData) return;
-    
+    if (!this.currentData?.daily_total_stats || !this.currentData?.exercise_summary) return;
+
     const totalCalories = this.currentData.food_diary.reduce((sum, food) => sum + food.calories, 0);
     const totalProtein = this.currentData.food_diary.reduce((sum, food) => sum + food.protein_g, 0);
     const totalCarbs = this.currentData.food_diary.reduce((sum, food) => sum + food.carbs_g, 0);
-    
-    this.currentData.daily_summary.total_intake_calories = totalCalories;
-    this.currentData.daily_summary.total_protein_g = totalProtein;
-    this.currentData.daily_summary.total_carbs_g = totalCarbs;
-    this.currentData.daily_summary.net_calories = totalCalories - this.currentData.exercise.total_burned_calories;
+    const totalFat = this.currentData.food_diary.reduce((sum, food) => sum + food.fat_g, 0);
+
+    this.currentData.daily_total_stats.total_intake_calories = totalCalories;
+    this.currentData.daily_total_stats.total_protein_g = totalProtein;
+    this.currentData.daily_total_stats.total_carbs_g = totalCarbs;
+    this.currentData.daily_total_stats.total_fat_g = totalFat;
+    this.currentData.daily_total_stats.net_calories = totalCalories - this.currentData.exercise_summary.total_burned_calories;
+    this.currentData.daily_total_stats.protein_per_kg = totalProtein / this.currentData.user_profile.weight_kg;
   }
 
   createEmptyData() {
@@ -293,28 +387,22 @@ export class DailyDashboardComponent implements OnInit {
         maintenance_protein_target_g: 100
       },
       food_diary: [],
-      exercise: {
-        cardio: {
-          type: "No Exercise",
-          distance_mi: 0,
-          duration_min: 0,
-          calories_burned: 0
-        },
-        strength_training: {
-          target_area: "None",
-          duration_min: 0,
-          calories_burned: 0,
-          intensity: "None"
-        },
+      exercise_summary: {
         total_burned_calories: 0
       },
-      daily_summary: {
+      daily_total_stats: {
         total_intake_calories: 0,
         total_burned_calories: 0,
         net_calories: 0,
         total_protein_g: 0,
         total_carbs_g: 0,
-        status: "No Data - Start Tracking!"
+        total_fat_g: 0,
+        protein_per_kg: 0
+      },
+      ai_evaluation: {
+        muscle_maintenance: "No Data",
+        weight_loss_status: "No Data",
+        recommendation: "Start tracking to get recommendations!"
       }
     };
 

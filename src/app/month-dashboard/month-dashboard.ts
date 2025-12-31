@@ -94,9 +94,9 @@ export class MonthDashboardComponent implements OnInit {
     this.monthlyStats.activeDays = this.monthlyData.length;
     this.monthlyStats.totalDays = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 0).getDate();
     
-    const totalCalories = this.monthlyData.reduce((sum, data) => sum + data.daily_summary.total_intake_calories, 0);
-    const totalProtein = this.monthlyData.reduce((sum, data) => sum + data.daily_summary.total_protein_g, 0);
-    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise.total_burned_calories, 0);
+    const totalCalories = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_intake_calories, 0);
+    const totalProtein = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_protein_g, 0);
+    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise_summary.total_burned_calories, 0);
     
     this.monthlyStats.avgCalories = Math.round(totalCalories / this.monthlyStats.activeDays);
     this.monthlyStats.avgProtein = Math.round(totalProtein / this.monthlyStats.activeDays);
@@ -106,10 +106,10 @@ export class MonthDashboardComponent implements OnInit {
     let worstData = this.monthlyData[0];
     
     this.monthlyData.forEach(data => {
-      if (data.daily_summary.total_intake_calories > bestData.daily_summary.total_intake_calories) {
+      if (data.daily_total_stats.total_intake_calories > bestData.daily_total_stats.total_intake_calories) {
         bestData = data;
       }
-      if (data.daily_summary.total_intake_calories < worstData.daily_summary.total_intake_calories) {
+      if (data.daily_total_stats.total_intake_calories < worstData.daily_total_stats.total_intake_calories) {
         worstData = data;
       }
     });
@@ -148,7 +148,7 @@ export class MonthDashboardComponent implements OnInit {
   }
 
   getStatusClass(data: FitnessData): string {
-    const netCal = data.daily_summary.net_calories;
+    const netCal = data.daily_total_stats.net_calories;
     if (netCal < 0) return 'deficit';
     if (netCal > 200) return 'surplus';
     return 'maintenance';

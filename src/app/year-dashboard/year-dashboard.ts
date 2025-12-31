@@ -91,7 +91,7 @@ export class YearDashboardComponent implements OnInit {
 
   processMonthData(month: number, data: FitnessData[], totalDays: number) {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const avgCalories = data.length > 0 ? Math.round(data.reduce((sum, d) => sum + d.daily_summary.total_intake_calories, 0) / data.length) : 0;
+    const avgCalories = data.length > 0 ? Math.round(data.reduce((sum, d) => sum + d.daily_total_stats.total_intake_calories, 0) / data.length) : 0;
     const completionRate = Math.round((data.length / totalDays) * 100);
     
     let status = 'low';
@@ -114,9 +114,9 @@ export class YearDashboardComponent implements OnInit {
     if (allData.length === 0) return;
 
     this.yearlyStats.totalActiveDays = allData.length;
-    this.yearlyStats.avgCalories = Math.round(allData.reduce((sum, d) => sum + d.daily_summary.total_intake_calories, 0) / allData.length);
-    this.yearlyStats.avgProtein = Math.round(allData.reduce((sum, d) => sum + d.daily_summary.total_protein_g, 0) / allData.length);
-    this.yearlyStats.totalBurned = allData.reduce((sum, d) => sum + d.exercise.total_burned_calories, 0);
+    this.yearlyStats.avgCalories = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_intake_calories, 0) / allData.length);
+    this.yearlyStats.avgProtein = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_protein_g, 0) / allData.length);
+    this.yearlyStats.totalBurned = allData.reduce((sum, d) => sum + d.exercise_summary.total_burned_calories, 0);
     
     const totalDaysInYear = new Date(this.currentYear, 11, 31).getDate() === 31 ? 365 : 366;
     this.yearlyStats.completionRate = Math.round((this.yearlyStats.totalActiveDays / totalDaysInYear) * 100);
