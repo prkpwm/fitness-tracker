@@ -177,16 +177,31 @@
         <div class="card food-card">
           <div class="card-header">
             <h3><i class="icon">🍽️</i> Food Diary</h3>
-            <button class="add-btn" (click)="showAddFood = !showAddFood">+</button>
+            <button class="add-btn" (click)="showAddFood = !showAddFood">{{showAddFood ? '−' : '+'}}</button>
           </div>
           
           @if (showAddFood) {
           <div class="add-form">
-            <input [(ngModel)]="newFood.item" placeholder="Food item" class="input">
-            <input [(ngModel)]="newFood.calories" type="number" placeholder="Calories" class="input">
-            <input [(ngModel)]="newFood.protein_g" type="number" placeholder="Protein (g)" class="input">
-            <input [(ngModel)]="newFood.carbs_g" type="number" placeholder="Carbs (g)" class="input">
-            <input [(ngModel)]="newFood.fat_g" type="number" placeholder="Fat (g)" class="input">
+            <div class="form-field">
+              <label>Food:</label>
+              <input [(ngModel)]="newFood.item" placeholder="e.g. Chicken Breast, Apple" class="input">
+            </div>
+            <div class="form-field">
+              <label>Calories:</label>
+              <input [(ngModel)]="newFood.calories" type="number" placeholder="e.g. 250" class="input">
+            </div>
+            <div class="form-field">
+              <label>Protein:</label>
+              <input [(ngModel)]="newFood.protein_g" type="number" placeholder="grams (e.g. 25)" class="input">
+            </div>
+            <div class="form-field">
+              <label>Carbs:</label>
+              <input [(ngModel)]="newFood.carbs_g" type="number" placeholder="grams (e.g. 15)" class="input">
+            </div>
+            <div class="form-field">
+              <label>Fat:</label>
+              <input [(ngModel)]="newFood.fat_g" type="number" placeholder="grams (e.g. 8)" class="input">
+            </div>
             <button (click)="addFood()" class="btn-primary">Add Food</button>
           </div>
           }
@@ -207,53 +222,64 @@
         <div class="card exercise-card">
           <div class="card-header">
             <h3><i class="icon">🏃</i> Exercise Log</h3>
-            <button class="add-btn" (click)="showAddExercise = !showAddExercise">+</button>
+            <button class="add-btn" (click)="showAddExercise = !showAddExercise">{{showAddExercise ? '−' : '+'}}</button>
           </div>
           
           @if (showAddExercise) {
           <div class="add-form">
-            <select [(ngModel)]="newExercise.type" class="input">
-              <option value="cardio">Cardio</option>
-              <option value="strength">Strength</option>
-            </select>
-            <input [(ngModel)]="newExercise.duration" type="number" placeholder="Duration (min)" class="input">
-            <input [(ngModel)]="newExercise.calories" type="number" placeholder="Calories burned" class="input">
+            <div class="form-field">
+              <label>Type:</label>
+              <select [(ngModel)]="newExercise.type" class="input">
+                <option value="cardio">Cardio</option>
+                <option value="strength">Strength</option>
+              </select>
+            </div>
+            @if (newExercise.type === 'cardio') {
+            <div class="form-field">
+              <label>Activity:</label>
+              <select [(ngModel)]="newExercise.cardioType" class="input">
+                <option value="Running">Running</option>
+                <option value="Walking">Walking</option>
+                <option value="Cycling">Cycling</option>
+                <option value="Swimming">Swimming</option>
+                <option value="Elliptical">Elliptical</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Distance:</label>
+              <input [(ngModel)]="newExercise.distance" type="number" step="0.01" placeholder="km (e.g. 5.2)" class="input">
+            </div>
+            } @else {
+            <div class="form-field">
+              <label>Target:</label>
+              <input [(ngModel)]="newExercise.strengthTarget" placeholder="e.g. Upper Body, Legs" class="input">
+            </div>
+            }
+            <div class="form-field">
+              <label>Duration:</label>
+              <input [(ngModel)]="newExercise.duration" type="number" placeholder="minutes (e.g. 30)" class="input">
+            </div>
+            <div class="form-field">
+              <label>Calories:</label>
+              <input [(ngModel)]="newExercise.calories" type="number" placeholder="burned (e.g. 250)" class="input">
+            </div>
             <button (click)="addExercise()" class="btn-primary">Add Exercise</button>
           </div>
           }
           
           <div class="exercise-list">
-            @if (currentData.exercise_summary.cardio_session_1) {
+            @for (exercise of getExerciseList(); track $index) {
             <div class="exercise-item">
-              <div class="exercise-type">🏃 {{currentData.exercise_summary.cardio_session_1.type}} #1</div>
-              <div class="exercise-details">
-                {{currentData.exercise_summary.cardio_session_1.distance_mi}} mi • 
-                {{currentData.exercise_summary.cardio_session_1.duration_min}} min • 
-                {{currentData.exercise_summary.cardio_session_1.calories_burned}} cal
-              </div>
+              <div class="exercise-type">{{exercise.icon}} {{exercise.name}}</div>
+              <div class="exercise-details">{{exercise.details}}</div>
             </div>
             }
             
-            @if (currentData.exercise_summary.cardio_session_2) {
-            <div class="exercise-item">
-              <div class="exercise-type">🏃 {{currentData.exercise_summary.cardio_session_2.type}} #2</div>
-              <div class="exercise-details">
-                {{currentData.exercise_summary.cardio_session_2.distance_mi}} mi • 
-                {{currentData.exercise_summary.cardio_session_2.duration_min}} min • 
-                {{currentData.exercise_summary.cardio_session_2.calories_burned}} cal
+            <div class="exercise-summary">
+              <div class="summary-total">
+                <strong>Total: {{getTotalExerciseTime()}} min • {{currentData.exercise_summary.total_burned_calories}} cal</strong>
               </div>
             </div>
-            }
-            
-            @if (currentData.exercise_summary.strength_training) {
-            <div class="exercise-item">
-              <div class="exercise-type">💪 {{currentData.exercise_summary.strength_training.target}}</div>
-              <div class="exercise-details">
-                {{currentData.exercise_summary.strength_training.duration_min}} min • 
-                {{currentData.exercise_summary.strength_training.calories_burned}} cal
-              </div>
-            </div>
-            }
           </div>
         </div>
       </div>

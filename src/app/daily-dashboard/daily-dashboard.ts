@@ -27,7 +27,7 @@ export class DailyDashboardComponent implements OnInit {
   tempWeight = 0;
 
   newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
-  newExercise = { type: 'cardio', duration: 0, calories: 0 };
+  newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
 
   constructor(private databaseService: DatabaseService, private route: ActivatedRoute) { }
 
@@ -102,6 +102,60 @@ export class DailyDashboardComponent implements OnInit {
     if (statusClass === 'deficit') return 'Deficit';
     if (statusClass === 'surplus') return 'Surplus';
     return 'Maintenance';
+  }
+
+  getExerciseList(): { icon: string; name: string; details: string }[] {
+    if (!this.currentData) return [];
+    
+    const exercises: { icon: string; name: string; details: string }[] = [];
+    const summary = this.currentData.exercise_summary;
+    
+    // Loop through all properties except total_burned_calories
+    Object.keys(summary).forEach(key => {
+      if (key !== 'total_burned_calories' && summary[key as keyof typeof summary]) {
+        const exercise = summary[key as keyof typeof summary];
+        if (!exercise) return;
+        
+        let details = '';
+        let name = '';
+        let icon = '';
+        
+        if (key.includes('cardio_session')) {
+          const cardioExercise = exercise as any;
+          const sessionNum = key.replace('cardio_session_', '#');
+          icon = '🏃';
+          name = `${cardioExercise.type} ${sessionNum}`;
+          details = `${(cardioExercise.distance_mi * 1.60934).toFixed(2)} km • ${cardioExercise.duration_min} min • ${cardioExercise.calories_burned} cal`;
+        } else if (key === 'strength_training') {
+          const strengthExercise = exercise as any;
+          icon = '💪';
+          name = strengthExercise.target;
+          details = `${strengthExercise.duration_min} min • ${strengthExercise.calories_burned} cal`;
+        }
+        
+        exercises.push({ icon, name, details });
+      }
+    });
+    
+    return exercises;
+  }
+
+  getTotalExerciseTime(): number {
+    if (!this.currentData) return 0;
+    
+    let total = 0;
+    const summary = this.currentData.exercise_summary;
+    
+    Object.keys(summary).forEach(key => {
+      if (key !== 'total_burned_calories' && summary[key as keyof typeof summary]) {
+        const exercise = summary[key as keyof typeof summary] as any;
+        if (exercise && exercise.duration_min) {
+          total += exercise.duration_min;
+        }
+      }
+    });
+    
+    return total;
   }
 
   getBMI(): string {
@@ -357,6 +411,48 @@ export class DailyDashboardComponent implements OnInit {
   }
 
   addExercise() {
+    if (this.newExercise.duration > 0 && this.newExercise.calories > 0 && this.currentData) {
+      // Find next available session slot
+      let sessionKey = '';
+      if (this.newExercise.type === 'cardio') {
+        let sessionNum = 1;
+        while (this.currentData.exercise_summary[`cardio_session_${sessionNum}` as keyof typeof this.currentData.exercise_summary]) {
+          sessionNum++;
+        }
+        sessionKey = `cardio_session_${sessionNum}`;
+        
+        // Add cardio session
+        (this.currentData.exercise_summary as any)[sessionKey] = {
+          type: this.newExercise.cardioType,
+          distance_mi: this.newExercise.distance / 1.60934, // Convert km to miles
+          duration_min: this.newExercise.duration,
+          calories_burned: this.newExercise.calories
+        };
+      } else if (this.newExercise.type === 'strength') {
+        // Add or update strength training
+        (this.currentData.exercise_summary as any).strength_training = {
+          target: this.newExercise.strengthTarget,
+          duration_min: this.newExercise.duration,
+          calories_burned: this.newExercise.calories
+        };
+      }
+      
+      // Update total burned calories
+      this.currentData.exercise_summary.total_burned_calories += this.newExercise.calories;
+      this.updateSummary();
+
+      this.databaseService.createFitnessData(this.currentData).subscribe({
+        next: (data) => {
+          this.currentData = data;
+        },
+        error: (err) => {
+          console.error('Error updating data:', err);
+        }
+      });
+
+      this.newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
+    }
+    
     this.showAddExercise = false;
   }
 
