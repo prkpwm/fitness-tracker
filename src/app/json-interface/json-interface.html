@@ -1,0 +1,12 @@
+<div class="json-container">
+  <div class="header">
+    <h2>Fitness Data JSON Viewer</h2>
+    <div class="controls">
+      <input [(ngModel)]="date" placeholder="2025-12-31" class="date-input">
+      <button (click)="loadJson()" class="load-btn">Load JSON</button>
+    </div>
+  </div>
+  <div class="json-display">
+    <pre class="json-content">{{ rawJson }}</pre>
+  </div>
+</div>

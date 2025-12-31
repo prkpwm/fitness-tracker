@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, from, of } from 'rxjs';
 import { FitnessData } from '../models/fitness.model';
 
@@ -10,7 +11,7 @@ export class DatabaseService {
   private dbVersion = 1;
   private db: IDBDatabase | null = null;
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.initDB();
   }
 
@@ -47,6 +48,10 @@ export class DatabaseService {
   // Debug method to view all data
   getAllData(): Observable<FitnessData[]> {
     return from(this.getAllRecords());
+  }
+
+  getRawJsonFromDB(date: string): Observable<string> {
+    return from(this.getDataByDate(date).then(data => JSON.stringify(data, null, 2)));
   }
 
   private async getDataByDate(date: string): Promise<FitnessData> {
