@@ -13,7 +13,12 @@
     <div class="dashboard-date text-center">{{selectedDate | date:'EEEE, MMMM d, y'}}</div>
   </div>
 
-  @if (currentData) {
+  @if (loading) {
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading...</p>
+  </div>
+  } @else if (currentData) {
   <div class="dashboard">
     <div class="dashboard-section">
       <div class="dashboard-header">
@@ -305,7 +310,7 @@
               <button class="import-text-btn" (click)="showJsonImport = !showJsonImport">📝 Import Text</button>
             </div>
           </div>
-          <pre class="json-content">{{getFormattedJson()}}</pre>
+          <pre class="json-content" [hidden]="showJsonImport">{{getFormattedJson()}}</pre>
           
           @if (showJsonImport) {
           <div class="json-import">
@@ -324,7 +329,7 @@
     </div>
   }
 
-  @if (!currentData) {
+  @if (!currentData && !loading) {
   <div class="no-data">
     <div class="no-data-card">
       <div class="no-data-icon">📅</div>

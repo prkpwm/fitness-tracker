@@ -51,7 +51,7 @@
           @if (!day.isEmpty) {
             <div class="day-number">{{day.day}}</div>
             @if (day.hasData) {
-              <div class="day-calories">{{day.data.daily_summary.total_intake_calories}}</div>
+              <div class="day-calories">{{day.data.daily_total_stats.total_intake_calories}}</div>
               <div class="day-indicator" [class]="day.status"></div>
             }
           }

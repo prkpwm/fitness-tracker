@@ -25,6 +25,7 @@ export class DailyDashboardComponent implements OnInit {
   jsonTextArea = '';
   editingWeight = false;
   tempWeight = 0;
+  loading = false;
 
   newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
   newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
@@ -59,15 +60,18 @@ export class DailyDashboardComponent implements OnInit {
 
   loadDataForDate() {
     const dateStr = this.formatDateForInput(this.selectedDate);
+    this.loading = true;
 
     this.dataService.getFitnessDataByDate(dateStr).subscribe({
       next: (data) => {
         this.currentData = this.validateAndFilterData(data);
+        this.loading = false;
         console.log(this.currentData);
       },
       error: (err) => {
         console.log('No data found for date:', dateStr);
         this.currentData = null;
+        this.loading = false;
       }
     });
   }
@@ -100,7 +104,7 @@ export class DailyDashboardComponent implements OnInit {
       }
 
       // Validate exercise_summary
-      if (!data.exercise_summary || typeof data.exercise_summary.total_burned_calories !== 'number') {
+      if (!data.exercise_summary || typeof data.exercise_summary.total_burned_calories !== 'number' || !data.exercise_summary.total_burned_calories) {
         data.exercise_summary = { total_burned_calories: 0 };
       }
 

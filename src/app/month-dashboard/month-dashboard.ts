@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DatabaseService } from '../services/database.service';
+import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
 
 interface MonthlyStats {
@@ -36,7 +36,7 @@ export class MonthDashboardComponent implements OnInit {
   };
   calendarDays: any[] = [];
 
-  constructor(private databaseService: DatabaseService, private router: Router, private route: ActivatedRoute) {}
+  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -63,29 +63,23 @@ export class MonthDashboardComponent implements OnInit {
       bestDay: '',
       worstDay: ''
     };
-    let loadedDays = 0;
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      
-      this.databaseService.getFitnessDataByDate(dateStr).subscribe({
-        next: (data) => {
-          this.monthlyData.push(data);
-          loadedDays++;
-          if (loadedDays === daysInMonth) {
-            this.calculateStats();
-            this.generateCalendar();
-          }
-        },
-        error: () => {
-          loadedDays++;
-          if (loadedDays === daysInMonth) {
-            this.calculateStats();
-            this.generateCalendar();
-          }
-        }
-      });
-    }
+    this.dataService.getAllFitnessData().subscribe({
+      next: (allData) => {
+        // Filter data for current month
+        this.monthlyData = allData.filter(data => {
+          const dataDate = new Date(data.date);
+          return dataDate.getFullYear() === year && dataDate.getMonth() === month;
+        });
+        this.calculateStats();
+        this.generateCalendar();
+      },
+      error: () => {
+        this.monthlyData = [];
+        this.calculateStats();
+        this.generateCalendar();
+      }
+    });
   }
 
   calculateStats() {
@@ -96,7 +90,7 @@ export class MonthDashboardComponent implements OnInit {
     
     const totalCalories = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_intake_calories, 0);
     const totalProtein = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_protein_g, 0);
-    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise_summary.total_burned_calories, 0);
+    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise_summary?.total_burned_calories || 0, 0);
     
     this.monthlyStats.avgCalories = Math.round(totalCalories / this.monthlyStats.activeDays);
     this.monthlyStats.avgProtein = Math.round(totalProtein / this.monthlyStats.activeDays);
