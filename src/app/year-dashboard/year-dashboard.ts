@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { DatabaseService } from '../services/database.service';
+import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
 
 interface YearlyStats {
@@ -32,6 +32,7 @@ interface MonthData {
 })
 export class YearDashboardComponent implements OnInit {
   currentYear = new Date().getFullYear();
+  loading = false;
   yearlyStats: YearlyStats = {
     totalActiveDays: 0,
     avgCalories: 0,
@@ -42,51 +43,42 @@ export class YearDashboardComponent implements OnInit {
   };
   monthsData: MonthData[] = [];
 
-  constructor(private databaseService: DatabaseService, private router: Router) {}
+  constructor(private dataService: DataService, private router: Router) {}
 
   ngOnInit() {
     this.loadYearlyData();
   }
 
   loadYearlyData() {
+    this.loading = true;
     this.monthsData = [];
-    let loadedMonths = 0;
-    const allData: FitnessData[] = [];
-
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(this.currentYear, month + 1, 0).getDate();
-      let monthData: FitnessData[] = [];
-      let loadedDays = 0;
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${this.currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
-        this.databaseService.getFitnessDataByDate(dateStr).subscribe({
-          next: (data) => {
-            monthData.push(data);
-            allData.push(data);
-            loadedDays++;
-            if (loadedDays === daysInMonth) {
-              this.processMonthData(month, monthData, daysInMonth);
-              loadedMonths++;
-              if (loadedMonths === 12) {
-                this.calculateYearlyStats(allData);
-              }
-            }
-          },
-          error: () => {
-            loadedDays++;
-            if (loadedDays === daysInMonth) {
-              this.processMonthData(month, monthData, daysInMonth);
-              loadedMonths++;
-              if (loadedMonths === 12) {
-                this.calculateYearlyStats(allData);
-              }
-            }
-          }
+    
+    this.dataService.getAllFitnessData().subscribe({
+      next: (allData) => {
+        // Filter data for current year
+        const yearData = allData.filter(data => {
+          const dataDate = new Date(data.date);
+          return dataDate.getFullYear() === this.currentYear;
         });
+        
+        // Process data by months
+        for (let month = 0; month < 12; month++) {
+          const monthData = yearData.filter(data => {
+            const dataDate = new Date(data.date);
+            return dataDate.getMonth() === month;
+          });
+          
+          const daysInMonth = new Date(this.currentYear, month + 1, 0).getDate();
+          this.processMonthData(month, monthData, daysInMonth);
+        }
+        
+        this.calculateYearlyStats(yearData);
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
       }
-    }
+    });
   }
 
   processMonthData(month: number, data: FitnessData[], totalDays: number) {
@@ -111,12 +103,15 @@ export class YearDashboardComponent implements OnInit {
   }
 
   calculateYearlyStats(allData: FitnessData[]) {
-    if (allData.length === 0) return;
+    if (allData.length === 0) {
+      this.loading = false;
+      return;
+    }
 
     this.yearlyStats.totalActiveDays = allData.length;
     this.yearlyStats.avgCalories = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_intake_calories, 0) / allData.length);
     this.yearlyStats.avgProtein = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_protein_g, 0) / allData.length);
-    this.yearlyStats.totalBurned = allData.reduce((sum, d) => sum + d.exercise_summary.total_burned_calories, 0);
+    this.yearlyStats.totalBurned = allData.reduce((sum, d) => sum + d.exercise_summary?.total_burned_calories || 0, 0);
     
     const totalDaysInYear = new Date(this.currentYear, 11, 31).getDate() === 31 ? 365 : 366;
     this.yearlyStats.completionRate = Math.round((this.yearlyStats.totalActiveDays / totalDaysInYear) * 100);
@@ -126,6 +121,7 @@ export class YearDashboardComponent implements OnInit {
       current.completionRate > best.completionRate ? current : best
     );
     this.yearlyStats.bestMonth = bestMonth.name;
+    this.loading = false;
   }
 
   changeYear(direction: number) {

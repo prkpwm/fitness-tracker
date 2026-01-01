@@ -1,4 +1,10 @@
 <div class="year-dashboard">
+  @if (loading) {
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading ...</p>
+  </div>
+  } @else {
   <div class="year-header">
     <button class="year-nav" (click)="changeYear(-1)">◀</button>
     <h2 class="year-title">📅 {{currentYear}}</h2>
@@ -69,4 +75,5 @@
       </div>
     }
   </div>
+  }
 </div>

@@ -25,6 +25,7 @@ interface MonthlyStats {
 export class MonthDashboardComponent implements OnInit {
   currentMonth = new Date();
   monthlyData: FitnessData[] = [];
+  loading = false;
   monthlyStats: MonthlyStats = {
     totalDays: 0,
     activeDays: 0,
@@ -64,6 +65,7 @@ export class MonthDashboardComponent implements OnInit {
       worstDay: ''
     };
 
+    this.loading = true;
     this.dataService.getAllFitnessData().subscribe({
       next: (allData) => {
         // Filter data for current month
@@ -73,11 +75,13 @@ export class MonthDashboardComponent implements OnInit {
         });
         this.calculateStats();
         this.generateCalendar();
+        this.loading = false;
       },
       error: () => {
         this.monthlyData = [];
         this.calculateStats();
         this.generateCalendar();
+        this.loading = false;
       }
     });
   }

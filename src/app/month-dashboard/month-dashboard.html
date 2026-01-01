@@ -1,4 +1,10 @@
 <div class="month-dashboard">
+  @if (loading) {
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading ...</p>
+  </div>
+  } @else {
   <div class="month-header">
     <button class="month-nav" (click)="changeMonth(-1)">◀</button>
     <h2 class="month-title">📅 {{getMonthName()}}</h2>
@@ -78,4 +84,5 @@
       <span>No Data</span>
     </div>
   </div>
+  }
 </div>
