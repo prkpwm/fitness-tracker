@@ -24,8 +24,10 @@ export class DataService {
         // Fallback to local database
         return this.databaseService.getFitnessDataByDate(date).pipe(
           tap(data => {
-            // Retry API call in background
-            this.apiService.createFitnessData(data).subscribe();
+            // Retry API call in background only if there's actual calorie data
+            if (data.daily_total_stats.total_intake_calories != 0) {
+              this.apiService.createFitnessData(data).subscribe();
+            }
           })
         );
       })
