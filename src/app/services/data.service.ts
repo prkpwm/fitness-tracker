@@ -20,8 +20,19 @@ export class DataService {
         // Cache to local database on API success
         this.databaseService.createFitnessData(data).subscribe();
       }),
-      catchError(() => {
-        // Fallback to local database
+      catchError((error) => {
+        // If 404 or any error, fallback to local database
+        if (error.status === 404 || error.status) {
+          return this.databaseService.getFitnessDataByDate(date).pipe(
+            tap(data => {
+              // Retry API call in background only if there's actual calorie data
+              if (data.daily_total_stats.total_intake_calories != 0) {
+                this.apiService.createFitnessData(data).subscribe();
+              }
+            })
+          );
+        }
+        // For other errors, still fallback to database
         return this.databaseService.getFitnessDataByDate(date).pipe(
           tap(data => {
             // Retry API call in background only if there's actual calorie data
@@ -35,16 +46,22 @@ export class DataService {
   }
 
   createFitnessData(data: FitnessData): Observable<FitnessData> {
-    return this.apiService.createFitnessData(data).pipe(
-      tap(result => {
-        // Cache to local database on API success
-        this.databaseService.createFitnessData(result).subscribe();
-      }),
-      catchError(() => {
-        // Fallback to local database only
-        return this.databaseService.createFitnessData(data);
-      })
-    );
+    // Only call API if there's actual calorie data
+    if (data.daily_total_stats.total_intake_calories != 0) {
+      return this.apiService.createFitnessData(data).pipe(
+        tap(result => {
+          // Cache to local database on API success
+          this.databaseService.createFitnessData(result).subscribe();
+        }),
+        catchError(() => {
+          // Fallback to local database only
+          return this.databaseService.createFitnessData(data);
+        })
+      );
+    } else {
+      // For zero calorie data, only use local database
+      return this.databaseService.createFitnessData(data);
+    }
   }
 
   getAllFitnessData(): Observable<FitnessData[]> {
@@ -55,8 +72,12 @@ export class DataService {
           this.databaseService.createFitnessData(item).subscribe();
         });
       }),
-      catchError(() => {
-        // Fallback to local database
+      catchError((error) => {
+        // If 404 or any error, fallback to local database
+        if (error.status === 404 || error.status) {
+          return this.databaseService.getAllData();
+        }
+        // For other errors, still fallback to database
         return this.databaseService.getAllData();
       })
     );
