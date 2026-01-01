@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { DatabaseService } from '../services/database.service';
+import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
 
 @Component({
@@ -29,7 +29,7 @@ export class DailyDashboardComponent implements OnInit {
   newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
   newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
 
-  constructor(private databaseService: DatabaseService, private route: ActivatedRoute) { }
+  constructor(private dataService: DataService, private route: ActivatedRoute) { }
 
   ngOnInit() {
     // Check for date query parameter
@@ -60,16 +60,76 @@ export class DailyDashboardComponent implements OnInit {
   loadDataForDate() {
     const dateStr = this.formatDateForInput(this.selectedDate);
 
-    this.databaseService.getFitnessDataByDate(dateStr).subscribe({
+    this.dataService.getFitnessDataByDate(dateStr).subscribe({
       next: (data) => {
-        this.currentData = data;
-        console.log(data);
+        this.currentData = this.validateAndFilterData(data);
+        console.log(this.currentData);
       },
       error: (err) => {
         console.log('No data found for date:', dateStr);
         this.currentData = null;
       }
     });
+  }
+
+  validateAndFilterData(data: any): FitnessData | null {
+    if (!data) return null;
+    
+    try {
+      // Validate user_profile
+      if (!data.user_profile || typeof data.user_profile.weight_kg !== 'number') {
+        console.warn('Invalid user_profile, using defaults');
+        data.user_profile = {
+          age: 28,
+          weight_kg: 70,
+          height_cm: 170,
+          bmr_kcal: 1800,
+          tdee_maintenance_kcal: 2200,
+          target_lose_weight_kcal: 1500,
+          target_protein_g: 120
+        };
+      }
+
+      // Validate food_diary
+      if (!Array.isArray(data.food_diary)) {
+        data.food_diary = [];
+      } else {
+        data.food_diary = data.food_diary.filter((food: any) => 
+          food && typeof food.item === 'string' && typeof food.calories === 'number'
+        );
+      }
+
+      // Validate exercise_summary
+      if (!data.exercise_summary || typeof data.exercise_summary.total_burned_calories !== 'number') {
+        data.exercise_summary = { total_burned_calories: 0 };
+      }
+
+      // Validate daily_total_stats
+      if (!data.daily_total_stats) {
+        data.daily_total_stats = {
+          total_intake_calories: 0,
+          total_burned_calories: 0,
+          net_calories: 0,
+          total_protein_g: 0,
+          total_carbs_g: 0,
+          total_fat_g: 0
+        };
+      }
+
+      // Validate ai_evaluation
+      if (!data.ai_evaluation) {
+        data.ai_evaluation = {
+          muscle_maintenance: "No Data",
+          weight_loss_status: "No Data",
+          recommendation: "Start tracking to get recommendations!"
+        };
+      }
+
+      return data as FitnessData;
+    } catch (error) {
+      console.error('Data validation failed:', error);
+      return null;
+    }
   }
 
   getCalorieProgress(): number {
@@ -304,7 +364,7 @@ export class DailyDashboardComponent implements OnInit {
         reader.onload = (e: any) => {
           try {
             const data = JSON.parse(e.target.result);
-            this.databaseService.createFitnessData(data).subscribe({
+            this.dataService.createFitnessData(data).subscribe({
               next: (savedData) => {
                 this.currentData = savedData;
                 alert('Data imported successfully!');
@@ -333,7 +393,7 @@ export class DailyDashboardComponent implements OnInit {
     if (this.currentData && this.tempWeight > 0) {
       this.currentData.user_profile.weight_kg = this.tempWeight;
       this.updateSummary();
-      this.databaseService.createFitnessData(this.currentData).subscribe({
+      this.dataService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
           this.editingWeight = false;
@@ -358,7 +418,7 @@ export class DailyDashboardComponent implements OnInit {
 
     try {
       const data = JSON.parse(this.jsonTextArea);
-      this.databaseService.createFitnessData(data).subscribe({
+      this.dataService.createFitnessData(data).subscribe({
         next: (savedData) => {
           this.currentData = savedData;
           this.jsonTextArea = '';
@@ -380,7 +440,7 @@ export class DailyDashboardComponent implements OnInit {
       this.currentData.food_diary.push({ ...this.newFood });
       this.updateSummary();
 
-      this.databaseService.createFitnessData(this.currentData).subscribe({
+      this.dataService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
         },
@@ -399,7 +459,7 @@ export class DailyDashboardComponent implements OnInit {
       this.currentData.food_diary.splice(index, 1);
       this.updateSummary();
 
-      this.databaseService.createFitnessData(this.currentData).subscribe({
+      this.dataService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
         },
@@ -441,7 +501,7 @@ export class DailyDashboardComponent implements OnInit {
       this.currentData.exercise_summary.total_burned_calories += this.newExercise.calories;
       this.updateSummary();
 
-      this.databaseService.createFitnessData(this.currentData).subscribe({
+      this.dataService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
           this.currentData = data;
         },
@@ -502,7 +562,7 @@ export class DailyDashboardComponent implements OnInit {
       }
     };
 
-    this.databaseService.createFitnessData(emptyData).subscribe({
+    this.dataService.createFitnessData(emptyData).subscribe({
       next: (data) => {
         this.currentData = data;
       },
