@@ -126,6 +126,9 @@
               </div>
             </div>
             <div class="goal-item">
+              <span>Recommended: {{currentData.user_profile.recommended_daily_calories}} cal</span>
+            </div>
+            <div class="goal-item">
               <span>Protein: {{currentData.daily_total_stats.total_protein_g}}/{{currentData.user_profile.maintenance_protein_target_g}}g</span>
               <div class="mini-progress">
                 <div class="mini-bar" [style.width.%]="getProteinProgress()"></div>

@@ -74,12 +74,12 @@ export class DailyDashboardComponent implements OnInit {
 
   getCalorieProgress(): number {
     if (!this.currentData?.daily_total_stats) return 0;
-    return parseFloat(Math.min((this.currentData.daily_total_stats.total_intake_calories / this.currentData.user_profile.goal_calories) * 100, 100).toFixed(2));
+    return parseFloat(((this.currentData.daily_total_stats.total_intake_calories / this.currentData.user_profile.goal_calories) * 100).toFixed(2));
   }
 
   getProteinProgress(): number {
     if (!this.currentData?.daily_total_stats) return 0;
-    return parseFloat(Math.min((this.currentData.daily_total_stats.total_protein_g / this.currentData.user_profile.maintenance_protein_target_g) * 100, 100).toFixed(2));
+    return parseFloat(((this.currentData.daily_total_stats.total_protein_g / this.currentData.user_profile.maintenance_protein_target_g) * 100).toFixed(2));
   }
 
   getStatusClass(): string {

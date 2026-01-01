@@ -3,6 +3,7 @@ export interface UserProfile {
   height_cm: number;
   goal_calories: number;
   maintenance_protein_target_g: number;
+  recommended_daily_calories?: number;
 }
 
 export interface FoodItem {
