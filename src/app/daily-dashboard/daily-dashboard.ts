@@ -372,6 +372,7 @@ export class DailyDashboardComponent implements OnInit {
         reader.onload = (e: any) => {
           try {
             const data = JSON.parse(e.target.result);
+            data.last_update = new Date().toISOString();
             this.dataService.createFitnessData(data).subscribe({
               next: () => {
                 this.currentData = data;
@@ -401,6 +402,7 @@ export class DailyDashboardComponent implements OnInit {
   saveWeight() {
     if (this.currentData && this.tempWeight > 0) {
       this.currentData.user_profile.weight_kg = this.tempWeight;
+      this.currentData.last_update = new Date().toISOString();
       this.updateSummary();
       this.dataService.createFitnessData(this.currentData).subscribe({
         next: () => {
@@ -427,6 +429,7 @@ export class DailyDashboardComponent implements OnInit {
 
     try {
       const data = JSON.parse(this.jsonTextArea);
+      data.last_update = new Date().toISOString();
       this.dataService.createFitnessData(data).subscribe({
         next: () => {
           this.currentData = data;
@@ -448,6 +451,7 @@ export class DailyDashboardComponent implements OnInit {
   addFood() {
     if (this.newFood.item && this.newFood.calories > 0 && this.currentData) {
       this.currentData.food_diary.push({ ...this.newFood });
+      this.currentData.last_update = new Date().toISOString();
       this.updateSummary();
 
       this.dataService.createFitnessData(this.currentData).subscribe({
@@ -467,6 +471,7 @@ export class DailyDashboardComponent implements OnInit {
   removeFood(index: number) {
     if (this.currentData) {
       this.currentData.food_diary.splice(index, 1);
+      this.currentData.last_update = new Date().toISOString();
       this.updateSummary();
 
       this.dataService.createFitnessData(this.currentData).subscribe({
@@ -509,6 +514,7 @@ export class DailyDashboardComponent implements OnInit {
 
       // Update total burned calories
       this.currentData.exercise_summary.total_burned_calories += this.newExercise.calories;
+      this.currentData.last_update = new Date().toISOString();
       this.updateSummary();
 
       this.dataService.createFitnessData(this.currentData).subscribe({
@@ -610,6 +616,7 @@ export class DailyDashboardComponent implements OnInit {
 
     this.dataService.createFitnessData(emptyData).subscribe({
       next: (data) => {
+        data.last_update = new Date().toISOString();
         this.currentData = data;
       },
       error: (err) => {

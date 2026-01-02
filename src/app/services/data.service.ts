@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { DatabaseService } from './database.service';
 import { FitnessData } from '../models/fitness.model';
@@ -16,9 +16,27 @@ export class DataService {
 
   getFitnessDataByDate(date: string): Observable<FitnessData> {
     return this.apiService.getFitnessDataByDate(date).pipe(
-      tap(data => {
-        this.databaseService.createFitnessData(data).subscribe();
+      switchMap(apiData => {
+        return this.databaseService.getFitnessDataByDate(date).pipe(
+          map(dbData => {
+            if (dbData.last_update && apiData.last_update) {
+              const dbTime = new Date(dbData.last_update.replace(' ', 'T')).getTime();
+              const apiTime = new Date(apiData.last_update.replace(' ', 'T')).getTime();
+              if (dbTime > apiTime) {
+                return { data: dbData, source: 'database' };
+              }
+            }
+            return { data: apiData, source: 'api' };
+          }),
+          catchError(() => of({ data: apiData, source: 'api' }))
+        );
       }),
+      tap(result => {
+        if (result.source === 'api') {
+          this.databaseService.createFitnessData(result.data).subscribe();
+        }
+      }),
+      map(result => result.data),
       catchError((error) => {
         if (error.status === 404 || error.status) {
           return this.databaseService.getFitnessDataByDate(date).pipe(

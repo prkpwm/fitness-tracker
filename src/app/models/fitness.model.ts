@@ -57,4 +57,5 @@ export interface FitnessData {
   exercise_summary: ExerciseSummary;
   daily_total_stats: DailyTotalStats;
   ai_evaluation: AIEvaluation;
+  last_update?: string;
 }
