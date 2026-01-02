@@ -1,0 +1,66 @@
+.dialog-content {
+  text-align: center;
+  padding: 20px 20px 0 20px;
+}
+
+.dialog-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: bold;
+  margin: 0 auto 25px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  animation: iconPulse 0.6s ease-out;
+}
+
+.success .dialog-icon {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+}
+
+.error .dialog-icon {
+  background: linear-gradient(135deg, #f44336, #EF5350);
+}
+
+
+@keyframes iconPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-button {
+  background: #4CAF50 !important;
+  color: white !important;
+  border-radius: 25px !important;
+  padding: 8px 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.success-button:hover {
+  background: #45a049 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4) !important;
+}
+
+.error-button {
+  background: #f44336 !important;
+  color: white !important;
+  border-radius: 25px !important;
+  padding: 8px 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.error-button:hover {
+  background: #da190b !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(244, 67, 54, 0.4) !important;
+}

@@ -256,7 +256,7 @@
   transform: scale(1.02);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1068px) {
   .month-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -273,4 +273,29 @@
   .legend {
     gap: 15px;
   }
+  
+  .calendar-container {
+    overflow-x: auto;
+    padding: 10px;
+  }
+  
+  .calendar-header, .calendar-grid {
+    min-width: 350px;
+  }
+  
+  .day-full {
+    display: none !important;
+  }
+  
+  .day-short {
+    display: inline !important;
+  }
+}
+
+.day-full {
+  display: inline;
+}
+
+.day-short {
+  display: none;
 }

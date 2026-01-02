@@ -1025,6 +1025,25 @@
   transform: translateY(-2px);
 }
 
+@media (max-width: 768px) {
+  .food-details, .exercise-details {
+    display: block;
+  }
+  
+  .detail-item {
+    display: inline;
+    margin-right: 8px;
+  }
+  
+  .detail-item:after {
+    content: " • ";
+  }
+  
+  .detail-item:last-child:after {
+    content: "";
+  }
+}
+
 .icon {
   margin-right: 8px;
   color: #333 !important;

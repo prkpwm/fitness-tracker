@@ -1,0 +1,10 @@
+<div mat-dialog-content class="dialog-content" [class]="data.type">
+  <div class="dialog-icon">
+    <span *ngIf="data.type === 'success'">✓</span>
+    <span *ngIf="data.type === 'error'">✗</span>
+  </div>
+  <p>{{ data.message }}</p>
+</div>
+<div mat-dialog-actions align="center">
+  <button mat-raised-button (click)="onClose()" [class]="data.type + '-button'">OK</button>
+</div>

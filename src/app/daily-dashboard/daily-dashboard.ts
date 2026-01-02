@@ -4,11 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
+import { MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MessageDialogComponent } from '../components/message-dialog.component';
 
 @Component({
   selector: 'app-daily-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule],
   templateUrl: './daily-dashboard.html',
   styleUrls: ['./daily-dashboard.css']
 })
@@ -30,7 +34,7 @@ export class DailyDashboardComponent implements OnInit {
   newFood = { item: '', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };
   newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
 
-  constructor(private dataService: DataService, private route: ActivatedRoute) { }
+  constructor(private dataService: DataService, private route: ActivatedRoute, private dialog: MatDialog) { }
 
   ngOnInit() {
     // Check for date query parameter
@@ -340,9 +344,9 @@ export class DailyDashboardComponent implements OnInit {
   copyJson() {
     const jsonText = this.getFormattedJson();
     navigator.clipboard.writeText(jsonText).then(() => {
-      alert('JSON copied to clipboard!');
+      this.showSuccessMessage('JSON copied to clipboard!');
     }).catch(() => {
-      alert('Failed to copy JSON');
+      this.showErrorMessage('Failed to copy JSON');
     });
   }
 
@@ -371,15 +375,15 @@ export class DailyDashboardComponent implements OnInit {
             this.dataService.createFitnessData(data).subscribe({
               next: (savedData) => {
                 this.currentData = savedData;
-                alert('Data imported successfully!');
+                this.showSuccessMessage('Data imported successfully!');
               },
               error: (err) => {
                 console.error('Error importing data:', err);
-                alert('Error importing data');
+                this.showErrorMessage('Error importing data');
               }
             });
           } catch (error) {
-            alert('Invalid JSON file');
+            this.showErrorMessage('Invalid JSON file');
           }
         };
         reader.readAsText(file);
@@ -416,7 +420,7 @@ export class DailyDashboardComponent implements OnInit {
 
   importJsonFromText() {
     if (!this.jsonTextArea.trim()) {
-      alert('Please enter JSON data');
+      this.showErrorMessage('Please enter JSON data');
       return;
     }
 
@@ -427,15 +431,15 @@ export class DailyDashboardComponent implements OnInit {
           this.currentData = savedData;
           this.jsonTextArea = '';
           this.showJsonImport = false;
-          alert('JSON data imported successfully!');
+          this.showSuccessMessage('JSON data imported successfully!');
         },
         error: (err) => {
           console.error('Error importing JSON:', err);
-          alert('Error importing JSON data');
+          this.showErrorMessage('Error importing JSON data');
         }
       });
     } catch (error) {
-      alert('Invalid JSON format');
+      this.showErrorMessage('Invalid JSON format');
     }
   }
 
@@ -534,6 +538,20 @@ export class DailyDashboardComponent implements OnInit {
     this.currentData.daily_total_stats.total_fat_g = totalFat;
     this.currentData.daily_total_stats.net_calories = totalCalories - this.currentData.exercise_summary.total_burned_calories;
     this.currentData.daily_total_stats.protein_per_kg = totalProtein / this.currentData.user_profile.weight_kg;
+  }
+
+  showErrorMessage(message: string) {
+    this.dialog.open(MessageDialogComponent, {
+      data: { message, type: 'error' },
+      width: '400px'
+    });
+  }
+
+  showSuccessMessage(message: string) {
+    this.dialog.open(MessageDialogComponent, {
+      data: { message, type: 'success' },
+      width: '400px'
+    });
   }
 
   createEmptyData() {
