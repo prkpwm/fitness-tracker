@@ -82,7 +82,7 @@ export class DailyDashboardComponent implements OnInit {
 
   validateAndFilterData(data: any): FitnessData | null {
     if (!data) return null;
-    
+
     try {
       // Validate user_profile
       if (!data.user_profile || typeof data.user_profile.weight_kg !== 'number') {
@@ -102,7 +102,7 @@ export class DailyDashboardComponent implements OnInit {
       if (!Array.isArray(data.food_diary)) {
         data.food_diary = [];
       } else {
-        data.food_diary = data.food_diary.filter((food: any) => 
+        data.food_diary = data.food_diary.filter((food: any) =>
           food && typeof food.item === 'string' && typeof food.calories === 'number'
         );
       }
@@ -174,20 +174,20 @@ export class DailyDashboardComponent implements OnInit {
 
   getExerciseList(): { icon: string; name: string; details: string }[] {
     if (!this.currentData) return [];
-    
+
     const exercises: { icon: string; name: string; details: string }[] = [];
     const summary = this.currentData.exercise_summary;
-    
+
     // Loop through all properties except total_burned_calories
     Object.keys(summary).forEach(key => {
       if (key !== 'total_burned_calories' && summary[key as keyof typeof summary]) {
         const exercise = summary[key as keyof typeof summary];
         if (!exercise) return;
-        
+
         let details = '';
         let name = '';
         let icon = '';
-        
+
         if (key.includes('cardio_session')) {
           const cardioExercise = exercise as any;
           const sessionNum = key.replace('cardio_session_', '#');
@@ -200,20 +200,20 @@ export class DailyDashboardComponent implements OnInit {
           name = strengthExercise.target;
           details = `${strengthExercise.duration_min} min • ${strengthExercise.calories_burned} cal`;
         }
-        
+
         exercises.push({ icon, name, details });
       }
     });
-    
+
     return exercises;
   }
 
   getTotalExerciseTime(): number {
     if (!this.currentData) return 0;
-    
+
     let total = 0;
     const summary = this.currentData.exercise_summary;
-    
+
     Object.keys(summary).forEach(key => {
       if (key !== 'total_burned_calories' && summary[key as keyof typeof summary]) {
         const exercise = summary[key as keyof typeof summary] as any;
@@ -222,7 +222,7 @@ export class DailyDashboardComponent implements OnInit {
         }
       }
     });
-    
+
     return total;
   }
 
@@ -374,7 +374,8 @@ export class DailyDashboardComponent implements OnInit {
             const data = JSON.parse(e.target.result);
             this.dataService.createFitnessData(data).subscribe({
               next: () => {
-                // this.currentData = savedData;
+                this.currentData = data;
+                this.updateSummary();
                 this.showSuccessMessage('Data imported successfully!');
               },
               error: (err) => {
@@ -428,9 +429,11 @@ export class DailyDashboardComponent implements OnInit {
       const data = JSON.parse(this.jsonTextArea);
       this.dataService.createFitnessData(data).subscribe({
         next: () => {
+          this.currentData = data;
           this.jsonTextArea = '';
           this.showJsonImport = false;
-          this.showSuccessMessage('JSON data imported successfully!');
+          this.updateSummary();
+          this.showSuccessMessage('JSON data imported successfully!', false);
         },
         error: (err) => {
           console.error('Error importing JSON:', err);
@@ -487,7 +490,7 @@ export class DailyDashboardComponent implements OnInit {
           sessionNum++;
         }
         sessionKey = `cardio_session_${sessionNum}`;
-        
+
         // Add cardio session
         (this.currentData.exercise_summary as any)[sessionKey] = {
           type: this.newExercise.cardioType,
@@ -503,7 +506,7 @@ export class DailyDashboardComponent implements OnInit {
           calories_burned: this.newExercise.calories
         };
       }
-      
+
       // Update total burned calories
       this.currentData.exercise_summary.total_burned_calories += this.newExercise.calories;
       this.updateSummary();
@@ -519,7 +522,7 @@ export class DailyDashboardComponent implements OnInit {
 
       this.newExercise = { type: 'cardio', duration: 0, calories: 0, distance: 0, cardioType: 'Running', strengthTarget: 'Full Body' };
     }
-    
+
     this.showAddExercise = false;
   }
 
@@ -531,11 +534,25 @@ export class DailyDashboardComponent implements OnInit {
     const totalCarbs = this.currentData.food_diary.reduce((sum, food) => sum + food.carbs_g, 0);
     const totalFat = this.currentData.food_diary.reduce((sum, food) => sum + food.fat_g, 0);
 
+    // Recalculate total burned calories from all exercise sessions
+    let totalBurnedCalories = 0;
+    const summary = this.currentData.exercise_summary;
+    Object.keys(summary).forEach(key => {
+      if (key !== 'total_burned_calories' && summary[key as keyof typeof summary]) {
+        const exercise = summary[key as keyof typeof summary] as any;
+        if (exercise && exercise.calories_burned) {
+          totalBurnedCalories += exercise.calories_burned;
+        }
+      }
+    });
+
     this.currentData.daily_total_stats.total_intake_calories = totalCalories;
     this.currentData.daily_total_stats.total_protein_g = totalProtein;
     this.currentData.daily_total_stats.total_carbs_g = totalCarbs;
     this.currentData.daily_total_stats.total_fat_g = totalFat;
-    this.currentData.daily_total_stats.net_calories = totalCalories - this.currentData.exercise_summary.total_burned_calories;
+    this.currentData.daily_total_stats.total_burned_calories = totalBurnedCalories;
+    this.currentData.exercise_summary.total_burned_calories = totalBurnedCalories;
+    this.currentData.daily_total_stats.net_calories = totalCalories - totalBurnedCalories;
     this.currentData.daily_total_stats.protein_per_kg = totalProtein / this.currentData.user_profile.weight_kg;
   }
 
@@ -551,10 +568,12 @@ export class DailyDashboardComponent implements OnInit {
       data: { message, type: 'success' },
       width: '400px'
     });
-    
+
     dialogRef.afterClosed().subscribe(() => {
       if (shouldReload) {
         window.location.reload();
+      } else {
+        window.scrollTo(0, 0);
       }
     });
   }

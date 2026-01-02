@@ -315,7 +315,7 @@
           @if (showJsonImport) {
           <div class="json-import">
             <h4>Import JSON Data</h4>
-            <textarea [(ngModel)]="jsonTextArea" placeholder="Paste JSON data here..." rows="10" class="json-textarea"></textarea>
+            <textarea [(ngModel)]="jsonTextArea" placeholder="Paste JSON data here..." rows="18" class="json-textarea"></textarea>
             <div class="import-actions">
               <button class="btn-primary" (click)="importJsonFromText()">Import JSON</button>
               <button class="btn-secondary" (click)="showJsonImport = false; jsonTextArea = ''">Cancel</button>
