@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { FitnessData } from '../models/fitness.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'https://fitness-tracker-backend-9qi5.onrender.com/api';
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
