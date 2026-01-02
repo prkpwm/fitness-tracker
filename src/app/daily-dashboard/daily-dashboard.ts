@@ -344,7 +344,7 @@ export class DailyDashboardComponent implements OnInit {
   copyJson() {
     const jsonText = this.getFormattedJson();
     navigator.clipboard.writeText(jsonText).then(() => {
-      this.showSuccessMessage('JSON copied to clipboard!');
+      this.showSuccessMessage('JSON copied to clipboard!', false);
     }).catch(() => {
       this.showErrorMessage('Failed to copy JSON');
     });
@@ -546,14 +546,16 @@ export class DailyDashboardComponent implements OnInit {
     });
   }
 
-  showSuccessMessage(message: string) {
+  showSuccessMessage(message: string, shouldReload: boolean = true) {
     const dialogRef = this.dialog.open(MessageDialogComponent, {
       data: { message, type: 'success' },
       width: '400px'
     });
     
     dialogRef.afterClosed().subscribe(() => {
-      window.location.reload();
+      if (shouldReload) {
+        window.location.reload();
+      }
     });
   }
 
