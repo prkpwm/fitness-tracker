@@ -62,7 +62,7 @@ export class YearDashboardComponent implements OnInit {
         for (let month = 0; month < 12; month++) {
           const monthData = yearData.filter(data => {
             const dataDate = new Date(data.date);
-            return dataDate.getMonth() === month;
+            return dataDate.getMonth() === month - 1;
           });
           
           const daysInMonth = new Date(this.currentYear, month + 1, 0).getDate();
@@ -128,6 +128,6 @@ export class YearDashboardComponent implements OnInit {
 
   onMonthClick(month: number) {
     const date = new Date(this.currentYear, month, 1);
-    this.router.navigate(['/monthly'], { queryParams: { year: this.currentYear, month: month } });
+    this.router.navigate(['/monthly'], { queryParams: { year: this.currentYear, month: month + 1 } });
   }
 }

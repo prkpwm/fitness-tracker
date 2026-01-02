@@ -66,7 +66,7 @@ export class MonthDashboardComponent implements OnInit {
     };
 
     this.loading = true;
-    this.dataService.getFitnessDataByMonth(year, month).subscribe({
+    this.dataService.getFitnessDataByMonth(year, month + 1).subscribe({
       next: (allData) => {
         // Data is already filtered for current month
         this.monthlyData = allData;

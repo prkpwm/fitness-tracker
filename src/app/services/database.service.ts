@@ -134,7 +134,7 @@ export class DatabaseService {
 
       request.onsuccess = () => {
         const allData = request.result as FitnessData[];
-        const monthStr = String(month + 1).padStart(2, '0');
+        const monthStr = String(month).padStart(2, '0');
         const prefix = `${year}-${monthStr}`;
         const monthData = allData.filter(data => data.date.startsWith(prefix));
         resolve(monthData);

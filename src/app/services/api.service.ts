@@ -16,7 +16,8 @@ export class ApiService {
   }
 
   getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
-    return this.http.get<FitnessData[]>(`${this.baseUrl}/fitness/year/${year}/month/${month}`);
+    const monthStr = String(month).padStart(2, '0');
+    return this.http.get<FitnessData[]>(`${this.baseUrl}/fitness/year/${year}/month/${monthStr}`);
   }
 
   getAllFitnessData(): Observable<FitnessData[]> {
