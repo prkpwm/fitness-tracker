@@ -548,9 +548,13 @@ export class DailyDashboardComponent implements OnInit {
   }
 
   showSuccessMessage(message: string) {
-    this.dialog.open(MessageDialogComponent, {
+    const dialogRef = this.dialog.open(MessageDialogComponent, {
       data: { message, type: 'success' },
       width: '400px'
+    });
+    
+    dialogRef.afterClosed().subscribe(() => {
+      window.location.reload();
     });
   }
 
