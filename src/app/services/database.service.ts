@@ -46,6 +46,14 @@ export class DatabaseService {
   }
 
   // Debug method to view all data
+  getFitnessDataByYear(year: number): Observable<FitnessData[]> {
+    return from(this.getDataByYear(year));
+  }
+
+  getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
+    return from(this.getDataByMonth(year, month));
+  }
+
   getAllData(): Observable<FitnessData[]> {
     return from(this.getAllRecords());
   }
@@ -95,6 +103,42 @@ export class DatabaseService {
       const request = store.getAll();
 
       request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private async getDataByYear(year: number): Promise<FitnessData[]> {
+    if (!this.db) await this.initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['fitness_data'], 'readonly');
+      const store = transaction.objectStore('fitness_data');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const allData = request.result as FitnessData[];
+        const yearData = allData.filter(data => data.date.startsWith(year.toString()));
+        resolve(yearData);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private async getDataByMonth(year: number, month: number): Promise<FitnessData[]> {
+    if (!this.db) await this.initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['fitness_data'], 'readonly');
+      const store = transaction.objectStore('fitness_data');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const allData = request.result as FitnessData[];
+        const monthStr = String(month + 1).padStart(2, '0');
+        const prefix = `${year}-${monthStr}`;
+        const monthData = allData.filter(data => data.date.startsWith(prefix));
+        resolve(monthData);
+      };
       request.onerror = () => reject(request.error);
     });
   }

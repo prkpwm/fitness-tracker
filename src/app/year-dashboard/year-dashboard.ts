@@ -53,13 +53,10 @@ export class YearDashboardComponent implements OnInit {
     this.loading = true;
     this.monthsData = [];
     
-    this.dataService.getAllFitnessData().subscribe({
+    this.dataService.getFitnessDataByYear(this.currentYear).subscribe({
       next: (allData) => {
-        // Filter data for current year
-        const yearData = allData.filter(data => {
-          const dataDate = new Date(data.date);
-          return dataDate.getFullYear() === this.currentYear;
-        });
+        // Data is already filtered for current year
+        const yearData = allData;
         
         // Process data by months
         for (let month = 0; month < 12; month++) {

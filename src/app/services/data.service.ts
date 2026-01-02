@@ -64,6 +64,44 @@ export class DataService {
     }
   }
 
+  getFitnessDataByYear(year: number): Observable<FitnessData[]> {
+    return this.apiService.getFitnessDataByYear(year).pipe(
+      tap(data => {
+        // Cache all data to local database
+        data.forEach(item => {
+          this.databaseService.createFitnessData(item).subscribe();
+        });
+      }),
+      catchError((error) => {
+        // If 404 or any error, fallback to local database
+        if (error.status === 404 || error.status) {
+          return this.databaseService.getFitnessDataByYear(year);
+        }
+        // For other errors, still fallback to database
+        return this.databaseService.getFitnessDataByYear(year);
+      })
+    );
+  }
+
+  getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
+    return this.apiService.getFitnessDataByMonth(year, month).pipe(
+      tap(data => {
+        // Cache all data to local database
+        data.forEach(item => {
+          this.databaseService.createFitnessData(item).subscribe();
+        });
+      }),
+      catchError((error) => {
+        // If 404 or any error, fallback to local database
+        if (error.status === 404 || error.status) {
+          return this.databaseService.getFitnessDataByMonth(year, month);
+        }
+        // For other errors, still fallback to database
+        return this.databaseService.getFitnessDataByMonth(year, month);
+      })
+    );
+  }
+
   getAllFitnessData(): Observable<FitnessData[]> {
     return this.apiService.getAllFitnessData().pipe(
       tap(data => {

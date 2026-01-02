@@ -11,6 +11,14 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
+  getFitnessDataByYear(year: number): Observable<FitnessData[]> {
+    return this.http.get<FitnessData[]>(`${this.baseUrl}/fitness/year/${year}`);
+  }
+
+  getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
+    return this.http.get<FitnessData[]>(`${this.baseUrl}/fitness/year/${year}/month/${month}`);
+  }
+
   getAllFitnessData(): Observable<FitnessData[]> {
     return this.http.get<FitnessData[]>(`${this.baseUrl}/fitness`);
   }
