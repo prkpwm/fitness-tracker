@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, tap, switchMap, map } from 'rxjs/operators';
+import { catchError, tap, switchMap, map, timeout } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { DatabaseService } from './database.service';
 import { FitnessData } from '../models/fitness.model';
@@ -16,6 +16,7 @@ export class DataService {
 
   getFitnessDataByDate(date: string): Observable<FitnessData> {
     return this.apiService.getFitnessDataByDate(date).pipe(
+      timeout(60000),
       switchMap(apiData => {
         return this.databaseService.getFitnessDataByDate(date).pipe(
           map(dbData => {
@@ -61,6 +62,7 @@ export class DataService {
   createFitnessData(data: FitnessData): Observable<FitnessData> {
     if (data.daily_total_stats.total_intake_calories != 0) {
       return this.apiService.createFitnessData(data).pipe(
+        timeout(60000),
         tap(result => {
           this.databaseService.createFitnessData(result).subscribe();
         }),
@@ -73,6 +75,7 @@ export class DataService {
 
   getFitnessDataByYear(year: number): Observable<FitnessData[]> {
     return this.apiService.getFitnessDataByYear(year).pipe(
+      timeout(60000),
       tap(data => {
         data.forEach(item => {
           this.databaseService.createFitnessData(item).subscribe();
@@ -89,6 +92,7 @@ export class DataService {
 
   getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
     return this.apiService.getFitnessDataByMonth(year, month).pipe(
+      timeout(60000),
       tap(data => {
         data.forEach(item => {
           this.databaseService.createFitnessData(item).subscribe();
@@ -105,6 +109,7 @@ export class DataService {
 
   getAllFitnessData(): Observable<FitnessData[]> {
     return this.apiService.getAllFitnessData().pipe(
+      timeout(60000),
       tap(data => {
         data.forEach(item => {
           this.databaseService.createFitnessData(item).subscribe();
