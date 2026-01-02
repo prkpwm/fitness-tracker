@@ -373,8 +373,8 @@ export class DailyDashboardComponent implements OnInit {
           try {
             const data = JSON.parse(e.target.result);
             this.dataService.createFitnessData(data).subscribe({
-              next: (savedData) => {
-                this.currentData = savedData;
+              next: () => {
+                // this.currentData = savedData;
                 this.showSuccessMessage('Data imported successfully!');
               },
               error: (err) => {
@@ -402,8 +402,8 @@ export class DailyDashboardComponent implements OnInit {
       this.currentData.user_profile.weight_kg = this.tempWeight;
       this.updateSummary();
       this.dataService.createFitnessData(this.currentData).subscribe({
-        next: (data) => {
-          this.currentData = data;
+        next: () => {
+          this.showSuccessMessage('Save weight successfully!');
           this.editingWeight = false;
         },
         error: (err) => {
@@ -427,8 +427,7 @@ export class DailyDashboardComponent implements OnInit {
     try {
       const data = JSON.parse(this.jsonTextArea);
       this.dataService.createFitnessData(data).subscribe({
-        next: (savedData) => {
-          this.currentData = savedData;
+        next: () => {
           this.jsonTextArea = '';
           this.showJsonImport = false;
           this.showSuccessMessage('JSON data imported successfully!');
@@ -450,7 +449,7 @@ export class DailyDashboardComponent implements OnInit {
 
       this.dataService.createFitnessData(this.currentData).subscribe({
         next: (data) => {
-          this.currentData = data;
+          this.showSuccessMessage('Added food successfully!');
         },
         error: (err) => {
           console.error('Error updating data:', err);
@@ -468,8 +467,8 @@ export class DailyDashboardComponent implements OnInit {
       this.updateSummary();
 
       this.dataService.createFitnessData(this.currentData).subscribe({
-        next: (data) => {
-          this.currentData = data;
+        next: () => {
+          this.showSuccessMessage('Removed food successfully!');
         },
         error: (err) => {
           console.error('Error updating data:', err);
@@ -510,8 +509,8 @@ export class DailyDashboardComponent implements OnInit {
       this.updateSummary();
 
       this.dataService.createFitnessData(this.currentData).subscribe({
-        next: (data) => {
-          this.currentData = data;
+        next: () => {
+          this.showSuccessMessage('Add exercise successfully!');
         },
         error: (err) => {
           console.error('Error updating data:', err);
