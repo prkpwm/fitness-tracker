@@ -172,4 +172,81 @@ export class MonthDashboardComponent implements OnInit {
       this.router.navigate(['/daily'], { queryParams: { date: dateStr } });
     }
   }
+
+  getRecommendedCalories(): number {
+    return this.monthlyData.length > 0 ? this.monthlyData[0].user_profile.goal_calories : 0;
+  }
+
+  getAvgNetCalories(): number {
+    if (this.monthlyData.length === 0) return 0;
+    const totalNet = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.net_calories, 0);
+    return Math.round(totalNet / this.monthlyData.length);
+  }
+
+  getCalorieDifference(): number {
+    return this.getAvgNetCalories() - this.getRecommendedCalories();
+  }
+
+  getDifferenceClass(): string {
+    const diff = this.getCalorieDifference();
+    return diff < 0 ? 'good' : diff > 200 ? 'high' : 'moderate';
+  }
+
+  getNetCalorieRecommendation(): string {
+    const diff = this.getCalorieDifference();
+    if (diff < -200) return 'Excellent deficit for weight loss';
+    if (diff < 0) return 'Good deficit maintained';
+    if (diff <= 200) return 'Near maintenance calories';
+    return 'High surplus - consider reducing intake';
+  }
+
+  getTotalCalories(): number {
+    return this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_intake_calories, 0);
+  }
+
+  getEstimatedWeightDecrease(): number {
+    const totalDeficit = Math.abs(this.getCalorieDifference()) * this.monthlyStats.activeDays;
+    return totalDeficit > 0 ? Math.round((totalDeficit / 7700) * 10) / 10 : 0; // 7700 cal = 1kg
+  }
+
+  getMinCalories(): number {
+    return this.monthlyData.length > 0 ? Math.min(...this.monthlyData.map(d => d.daily_total_stats.total_intake_calories)) : 0;
+  }
+
+  getMaxCalories(): number {
+    return this.monthlyData.length > 0 ? Math.max(...this.monthlyData.map(d => d.daily_total_stats.total_intake_calories)) : 0;
+  }
+
+  getMinProtein(): number {
+    return this.monthlyData.length > 0 ? Math.min(...this.monthlyData.map(d => d.daily_total_stats.total_protein_g)) : 0;
+  }
+
+  getMaxProtein(): number {
+    return this.monthlyData.length > 0 ? Math.max(...this.monthlyData.map(d => d.daily_total_stats.total_protein_g)) : 0;
+  }
+
+  getTotalProtein(): number {
+    return this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_protein_g, 0);
+  }
+
+  getBurnedStatus(): string {
+    const avgBurned = this.getAvgBurned();
+    if (avgBurned >= 500) return 'Excellent burn rate';
+    if (avgBurned >= 300) return 'Good activity level';
+    if (avgBurned >= 150) return 'Moderate activity';
+    return 'Low activity level';
+  }
+
+  getAvgBurned(): number {
+    return this.monthlyStats.activeDays > 0 ? Math.round(this.monthlyStats.totalBurned / this.monthlyStats.activeDays) : 0;
+  }
+
+  getMaxBurned(): number {
+    return this.monthlyData.length > 0 ? Math.max(...this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0)) : 0;
+  }
+
+  getMinBurned(): number {
+    const burnedValues = this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0).filter(val => val > 0);
+    return burnedValues.length > 0 ? Math.min(...burnedValues) : 0;
+  }
 }

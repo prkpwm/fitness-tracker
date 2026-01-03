@@ -77,6 +77,51 @@
   transition: transform 0.3s ease;
 }
 
+.stat-card.net-cal-analysis .stat-value.good {
+  color: #4CAF50;
+}
+
+.stat-card.net-cal-analysis .stat-value.moderate {
+  color: #ff9800;
+}
+
+.stat-card.net-cal-analysis .stat-value.high {
+  color: #f44336;
+}
+
+.stat-card.activity-analysis .stat-value {
+  color: #2196F3;
+}
+
+.stat-sublabel {
+  color: #888;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+.additional-stats {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.additional-stat {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.additional-label {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.additional-value {
+  color: #333;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 .stat-card:hover {
   transform: translateY(-3px);
 }

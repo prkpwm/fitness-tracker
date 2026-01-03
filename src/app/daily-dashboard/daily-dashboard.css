@@ -321,7 +321,7 @@
 
 .overview-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 20px;
 }
 
@@ -1047,4 +1047,88 @@
 .icon {
   margin-right: 8px;
   color: #333 !important;
+}
+
+.net-cal-recommendation {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.net-cal-recommendation h3 {
+  color: white !important;
+}
+
+.recommendation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.calorie-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+}
+
+.comparison-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.comparison-item.difference {
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 8px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.comparison-label {
+  color: rgba(255,255,255,0.8);
+}
+
+.comparison-value {
+  font-weight: 600;
+  color: white;
+}
+
+.difference-good {
+  color: #27ae60 !important;
+  font-weight: 700;
+}
+
+.difference-high {
+  color: #e74c3c !important;
+  font-weight: 700;
+}
+
+.difference-low {
+  color: #f39c12 !important;
+  font-weight: 700;
+}
+
+.net-cal-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.status-icon {
+  font-size: 1.5rem;
+}
+
+.recommendation-details p {
+  margin: 0;
+  color: rgba(255,255,255,0.9);
+  font-size: 0.95rem;
+  line-height: 1.4;
 }

@@ -337,6 +337,53 @@ export class DailyDashboardComponent implements OnInit {
     return `${percentage.toFixed(1)}%`;
   }
 
+  getNetCalorieRecommendation(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+    const netCal = this.currentData.daily_total_stats.net_calories;
+    if (netCal < -500) return 'Very High Deficit';
+    if (netCal < -200) return 'High Deficit';
+    if (netCal < 0) return 'Moderate Deficit';
+    if (netCal <= 200) return 'Maintenance Range';
+    if (netCal <= 500) return 'Moderate Surplus';
+    return 'High Surplus';
+  }
+
+  getNetCalorieAdvice(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+    const netCal = this.currentData.daily_total_stats.net_calories;
+    if (netCal < -500) return 'Very aggressive deficit. Consider adding more calories or reducing exercise to avoid muscle loss.';
+    if (netCal < -200) return 'Good deficit for weight loss. Monitor energy levels and adjust if needed.';
+    if (netCal < 0) return 'Healthy deficit for gradual weight loss. Keep up the good work!';
+    if (netCal <= 200) return 'Perfect for maintaining current weight. Great balance between intake and exercise.';
+    if (netCal <= 500) return 'Slight surplus. Good for muscle building but monitor if weight loss is your goal.';
+    return 'High surplus. Consider increasing exercise or reducing calorie intake if weight management is important.';
+  }
+
+  getRecommendedCalories(): number {
+    if (!this.currentData?.user_profile) return 0;
+    return this.currentData.user_profile.recommended_daily_calories || this.currentData.user_profile.goal_calories;
+  }
+
+  getCalorieDifference(): string {
+    if (!this.currentData?.daily_total_stats) return '0';
+    const recommended = this.getRecommendedCalories();
+    const netCal = this.currentData.daily_total_stats.net_calories;
+    const diff = netCal - recommended;
+    return diff > 0 ? `+${diff}` : `${diff}`;
+  }
+
+  getDifferenceClass(): string {
+    if (!this.currentData?.daily_total_stats) return '';
+    const recommended = this.getRecommendedCalories();
+    const netCal = this.currentData.daily_total_stats.net_calories;
+    const diff = netCal - recommended;
+    
+    // Any negative difference (deficit) is good for weight loss
+    if (diff < 0) return 'difference-good'; // Any deficit is good
+    if (Math.abs(diff) <= 100) return 'difference-good'; // Close to target
+    return 'difference-high'; // Surplus
+  }
+
   getFormattedJson(): string {
     return JSON.stringify(this.currentData, null, 2);
   }

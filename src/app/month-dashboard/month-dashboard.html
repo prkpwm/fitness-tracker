@@ -25,18 +25,74 @@
       <div class="stat-icon">🔥</div>
       <div class="stat-value">{{monthlyStats.avgCalories}}</div>
       <div class="stat-label">Avg Calories</div>
+      <div class="additional-stats">
+        <div class="additional-stat">
+          <span class="additional-label">Total Calories:</span>
+          <span class="additional-value">{{getTotalCalories()}}</span>
+        </div>
+      </div>
+      <div class="">
+        <div class="additional-stat">
+          <span class="additional-label">Min/Max:</span>
+          <span class="additional-value">{{getMinCalories()}}/{{getMaxCalories()}}</span>
+        </div>
+      </div>
     </div>
 
     <div class="stat-card">
       <div class="stat-icon">🥛</div>
       <div class="stat-value">{{monthlyStats.avgProtein}}g</div>
       <div class="stat-label">Avg Protein</div>
+      <div class="additional-stats">
+        <div class="additional-stat">
+          <span class="additional-label">Total Protein:</span>
+          <span class="additional-value">{{getTotalProtein()}}g</span>
+        </div>
+      </div>
+      <div class="">
+        <div class="additional-stat">
+          <span class="additional-label">Min/Max:</span>
+          <span class="additional-value">{{getMinProtein()}}/{{getMaxProtein()}}g</span>
+        </div>
+      </div>
     </div>
 
-    <div class="stat-card">
+    <div class="stat-card activity-analysis">
       <div class="stat-icon">⚡</div>
       <div class="stat-value">{{monthlyStats.totalBurned}}</div>
       <div class="stat-label">Total Burned</div>
+      <div class="stat-sublabel">{{getBurnedStatus()}}</div>
+      <div class="additional-stats">
+        <div class="additional-stat">
+          <span class="additional-label">Avg Daily:</span>
+          <span class="additional-value">{{getAvgBurned()}} cal</span>
+        </div>
+        <div class="additional-stat">
+          <span class="additional-label">Min/Max:</span>
+          <span class="additional-value">{{getMinBurned()}}/{{getMaxBurned()}} cal</span>
+        </div>
+        <div class="additional-stat">
+          <span class="additional-label">Active Days:</span>
+          <span class="additional-value">{{monthlyStats.activeDays}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card net-cal-analysis">
+      <div class="stat-icon">💡</div>
+      <div class="stat-value" [class]="getDifferenceClass()">{{getCalorieDifference()}} cal</div>
+      <div class="stat-label">Avg Net vs Goal</div>
+      <div class="stat-sublabel">{{getNetCalorieRecommendation()}}</div>
+      <div class="additional-stats">
+        <div class="additional-stat">
+          <span class="additional-label">Total Calories:</span>
+          <span class="additional-value">{{getTotalCalories()}}</span>
+        </div>
+        <div class="additional-stat">
+          <span class="additional-label">Est. Weight Loss:</span>
+          <span class="additional-value">{{getEstimatedWeightDecrease()}} kg</span>
+        </div>
+      </div>
     </div>
   </div>
 

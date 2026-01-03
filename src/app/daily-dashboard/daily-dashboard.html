@@ -131,9 +131,6 @@
               </div>
             </div>
             <div class="goal-item">
-              <span>Recommended: {{currentData.user_profile.recommended_daily_calories}} cal</span>
-            </div>
-            <div class="goal-item">
               <span>Protein: {{currentData.daily_total_stats.total_protein_g}}/{{currentData.user_profile.maintenance_protein_target_g}}g</span>
               <div class="mini-progress">
                 <div class="mini-bar" [style.width.%]="getProteinProgress()"></div>
@@ -174,6 +171,33 @@
             <div class="ai-recommendation">
               <span class="ai-label">Recommendation:</span>
               <p class="ai-text">{{currentData.ai_evaluation.recommendation}}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="overview-card net-cal-recommendation">
+          <h3>💡 Net Calorie Analysis</h3>
+          <div class="recommendation-content">
+            <div class="net-cal-status" [class]="getStatusClass()">
+              <span class="status-icon">{{getStatusEmoji()}}</span>
+              <span class="status-text">{{getNetCalorieRecommendation()}}</span>
+            </div>
+            <div class="calorie-comparison">
+              <div class="comparison-item">
+                <span class="comparison-label">Recommended:</span>
+                <span class="comparison-value">{{getRecommendedCalories()}} cal</span>
+              </div>
+              <div class="comparison-item">
+                <span class="comparison-label">Net Calories:</span>
+                <span class="comparison-value" [class]="getStatusClass()">{{currentData.daily_total_stats.net_calories}} cal</span>
+              </div>
+              <div class="comparison-item difference">
+                <span class="comparison-label">Difference:</span>
+                <span class="comparison-value" [class]="getDifferenceClass()">{{getCalorieDifference()}} cal</span>
+              </div>
+            </div>
+            <div class="recommendation-details">
+              <p>{{getNetCalorieAdvice()}}</p>
             </div>
           </div>
         </div>

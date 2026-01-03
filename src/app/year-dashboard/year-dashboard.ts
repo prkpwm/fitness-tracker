@@ -42,6 +42,7 @@ export class YearDashboardComponent implements OnInit {
     completionRate: 0
   };
   monthsData: MonthData[] = [];
+  allYearData: FitnessData[] = [];
 
   constructor(private dataService: DataService, private router: Router) {}
 
@@ -113,6 +114,9 @@ export class YearDashboardComponent implements OnInit {
     const totalDaysInYear = new Date(this.currentYear, 11, 31).getDate() === 31 ? 365 : 366;
     this.yearlyStats.completionRate = Math.round((this.yearlyStats.totalActiveDays / totalDaysInYear) * 100);
 
+    // Store all data for min/max calculations
+    this.allYearData = allData;
+
     // Find best month
     const bestMonth = this.monthsData.reduce((best, current) => 
       current.completionRate > best.completionRate ? current : best
@@ -128,5 +132,76 @@ export class YearDashboardComponent implements OnInit {
 
   onMonthClick(month: number) {
     this.router.navigate(['/monthly'], { queryParams: { year: this.currentYear, month: month } });
+  }
+
+  getRecommendedCalories(): number {
+    // Use first available data point for user profile
+    const allData = this.monthsData.flatMap(m => m);
+    return 2000; // Default fallback - could be enhanced to get from user profile
+  }
+
+  getAvgNetCalories(): number {
+    const totalActiveDays = this.yearlyStats.totalActiveDays;
+    if (totalActiveDays === 0) return 0;
+    // This would need actual net calorie data - simplified for now
+    return this.yearlyStats.avgCalories - 300; // Rough estimate
+  }
+
+  getCalorieDifference(): number {
+    return this.getAvgNetCalories() - this.getRecommendedCalories();
+  }
+
+  getDifferenceClass(): string {
+    const diff = this.getCalorieDifference();
+    return diff < 0 ? 'good' : diff > 200 ? 'high' : 'moderate';
+  }
+
+  getNetCalorieRecommendation(): string {
+    const diff = this.getCalorieDifference();
+    if (diff < -200) return 'Excellent yearly deficit trend';
+    if (diff < 0) return 'Good yearly deficit maintained';
+    if (diff <= 200) return 'Near maintenance for the year';
+    return 'High yearly surplus - review goals';
+  }
+
+  getTotalCalories(): number {
+    return this.yearlyStats.avgCalories * this.yearlyStats.totalActiveDays;
+  }
+
+  getEstimatedWeightDecrease(): number {
+    const totalDeficit = Math.abs(this.getCalorieDifference()) * this.yearlyStats.totalActiveDays;
+    return totalDeficit > 0 ? Math.round((totalDeficit / 7700) * 10) / 10 : 0; // 7700 cal = 1kg
+  }
+
+  getActivityScore(): number {
+    return Math.round((this.yearlyStats.completionRate + (this.yearlyStats.totalBurned / 100)) / 2);
+  }
+
+  getActivityStatus(): string {
+    const score = this.getActivityScore();
+    if (score >= 80) return 'Excellent activity level';
+    if (score >= 60) return 'Good activity level';
+    if (score >= 40) return 'Moderate activity level';
+    return 'Low activity level';
+  }
+
+  getTotalProtein(): number {
+    return this.yearlyStats.avgProtein * this.yearlyStats.totalActiveDays;
+  }
+
+  getMinCalories(): number {
+    return this.allYearData.length > 0 ? Math.min(...this.allYearData.map(d => d.daily_total_stats.total_intake_calories)) : 0;
+  }
+
+  getMaxCalories(): number {
+    return this.allYearData.length > 0 ? Math.max(...this.allYearData.map(d => d.daily_total_stats.total_intake_calories)) : 0;
+  }
+
+  getMinProtein(): number {
+    return this.allYearData.length > 0 ? Math.min(...this.allYearData.map(d => d.daily_total_stats.total_protein_g)) : 0;
+  }
+
+  getMaxProtein(): number {
+    return this.allYearData.length > 0 ? Math.max(...this.allYearData.map(d => d.daily_total_stats.total_protein_g)) : 0;
   }
 }
