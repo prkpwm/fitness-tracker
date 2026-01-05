@@ -33,14 +33,14 @@
               <span class="stat-title">Calories</span>
             </div>
             <div class="stat-main">
-              <span class="stat-value">{{currentData.daily_total_stats.total_intake_calories}}</span>
-              <span class="stat-unit">/ {{currentData.user_profile.goal_calories}}</span>
+              <span class="stat-value">{{currentData.daily_total_stats.total_intake_calories | number:'1.0-0'}}</span>
+              <span class="stat-unit">/ {{currentData.user_profile.goal_calories | number:'1.0-0'}}</span>
             </div>
             <div class="progress-container">
               <div class="progress-bar">
                 <div class="progress calories-progress" [style.width.%]="getCalorieProgress()"></div>
               </div>
-              <span class="progress-text">{{getCalorieProgress()}}% of goal</span>
+              <span class="progress-text">{{getCalorieProgress() | number:'1.0-0'}}% of goal</span>
             </div>
           </div>
         </div>
@@ -52,14 +52,14 @@
               <span class="stat-title">Protein</span>
             </div>
             <div class="stat-main">
-              <span class="stat-value">{{currentData.daily_total_stats.total_protein_g}}</span>
-              <span class="stat-unit">g / {{currentData.user_profile.maintenance_protein_target_g}}g</span>
+              <span class="stat-value">{{currentData.daily_total_stats.total_protein_g | number:'1.0-0'}}</span>
+              <span class="stat-unit">g / {{currentData.user_profile.maintenance_protein_target_g | number:'1.0-0'}}g</span>
             </div>
             <div class="progress-container">
               <div class="progress-bar">
                 <div class="progress protein-progress" [style.width.%]="getProteinProgress()"></div>
               </div>
-              <span class="progress-text">{{getProteinProgress()}}% of target</span>
+              <span class="progress-text">{{getProteinProgress() | number:'1.0-0'}}% of target</span>
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@
               <span class="stat-title">Status</span>
             </div>
             <div class="stat-main">
-              <span class="stat-value">{{currentData.daily_total_stats.net_calories}}</span>
+              <span class="stat-value">{{currentData.daily_total_stats.net_calories | number:'1.0-0'}}</span>
               <span class="stat-unit">net cal</span>
             </div>
             <div class="status-label">{{getStatusText()}}</div>
@@ -82,16 +82,16 @@
       <div class="secondary-stats">
         <div class="stat-tile">
           <div class="tile-icon">⚡</div>
-          <div class="tile-value">{{currentData.exercise_summary.total_burned_calories}}</div>
+          <div class="tile-value">{{currentData.exercise_summary.total_burned_calories | number:'1.0-0'}}</div>
           <div class="tile-label">Burned</div>
         </div>
         
         <div class="stat-tile weight-tile">
           <div class="tile-icon">⚖️</div>
           @if (!editingWeight) {
-          <div class="tile-value" (click)="startEditWeight()">{{currentData.user_profile.weight_kg}}kg</div>
+          <div class="tile-value" (click)="startEditWeight()">{{currentData.user_profile.weight_kg | number:'1.1-1'}}kg</div>
           <div class="tile-label">Weight (click to edit)</div>
-          <div class="tile-sublabel">BMI: {{getBMI()}} ({{getBMICategory()}})</div>
+          <div class="tile-sublabel">BMI: {{getBMI() | number:'1.1-1'}} ({{getBMICategory()}})</div>
           } @else {
           <div class="weight-edit">
             <input [(ngModel)]="tempWeight" type="number" class="weight-input" placeholder="Weight">
@@ -105,14 +105,14 @@
         
         <div class="stat-tile" [class]="getCarbsStatus()">
           <div class="tile-icon">🍞</div>
-          <div class="tile-value">{{currentData.daily_total_stats.total_carbs_g}}g</div>
+          <div class="tile-value">{{currentData.daily_total_stats.total_carbs_g | number:'1.0-0'}}g</div>
           <div class="tile-label">Carbs {{getCarbsPercentage()}} (45-65%)</div>
           <div class="tile-sublabel">{{getCarbsDescription()}}</div>
         </div>
         
         <div class="stat-tile" [class]="getFatStatus()">
           <div class="tile-icon">🥑</div>
-          <div class="tile-value">{{currentData.daily_total_stats.total_fat_g}}g</div>
+          <div class="tile-value">{{currentData.daily_total_stats.total_fat_g | number:'1.0-0'}}g</div>
           <div class="tile-label">Fat {{getFatPercentage()}} (20-35%)</div>
           <div class="tile-sublabel">{{getFatDescription()}}</div>
         </div>
@@ -125,13 +125,13 @@
           <h3>🎯 Daily Goals</h3>
           <div class="goal-progress">
             <div class="goal-item">
-              <span>Calories: {{currentData.daily_total_stats.total_intake_calories}}/{{currentData.user_profile.goal_calories}}</span>
+              <span>Calories: {{currentData.daily_total_stats.total_intake_calories | number:'1.0-0'}}/{{currentData.user_profile.goal_calories | number:'1.0-0'}}</span>
               <div class="mini-progress">
                 <div class="mini-bar" [style.width.%]="getCalorieProgress()"></div>
               </div>
             </div>
             <div class="goal-item">
-              <span>Protein: {{currentData.daily_total_stats.total_protein_g}}/{{currentData.user_profile.maintenance_protein_target_g}}g</span>
+              <span>Protein: {{currentData.daily_total_stats.total_protein_g | number:'1.0-0'}}/{{currentData.user_profile.maintenance_protein_target_g | number:'1.0-0'}}g</span>
               <div class="mini-progress">
                 <div class="mini-bar" [style.width.%]="getProteinProgress()"></div>
               </div>
@@ -144,15 +144,15 @@
           <div class="summary-stats">
             <div class="summary-item">
               <span class="summary-label">Total Intake:</span>
-              <span class="summary-value">{{currentData.daily_total_stats.total_intake_calories}} cal</span>
+              <span class="summary-value">{{currentData.daily_total_stats.total_intake_calories | number:'1.0-0'}} cal</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Exercise Burned:</span>
-              <span class="summary-value">{{currentData.exercise_summary.total_burned_calories}} cal</span>
+              <span class="summary-value">{{currentData.exercise_summary.total_burned_calories | number:'1.0-0'}} cal</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Net Balance:</span>
-              <span class="summary-value" [class]="getStatusClass()">{{currentData.daily_total_stats.net_calories}} cal</span>
+              <span class="summary-value" [class]="getStatusClass()">{{currentData.daily_total_stats.net_calories | number:'1.0-0'}} cal</span>
             </div>
           </div>
         </div>
@@ -185,15 +185,15 @@
             <div class="calorie-comparison">
               <div class="comparison-item">
                 <span class="comparison-label">Recommended:</span>
-                <span class="comparison-value">{{getRecommendedCalories()}} cal</span>
+                <span class="comparison-value">{{getRecommendedCalories() | number:'1.0-0'}} cal</span>
               </div>
               <div class="comparison-item">
                 <span class="comparison-label">Net Calories:</span>
-                <span class="comparison-value" [class]="getStatusClass()">{{currentData.daily_total_stats.net_calories}} cal</span>
+                <span class="comparison-value" [class]="getStatusClass()">{{currentData.daily_total_stats.net_calories | number:'1.0-0'}} cal</span>
               </div>
               <div class="comparison-item difference">
                 <span class="comparison-label">Difference:</span>
-                <span class="comparison-value" [class]="getDifferenceClass()">{{getCalorieDifference()}} cal</span>
+                <span class="comparison-value" [class]="getDifferenceClass()">{{getCalorieDifference() | number:'1.0-0'}} cal</span>
               </div>
             </div>
             <div class="recommendation-details">
@@ -243,7 +243,7 @@
             <div class="food-item">
               <div class="food-info">
                 <div class="food-name">{{food.item}}</div>
-                <div class="food-details">{{food.calories}} cal • {{food.protein_g}}g protein • {{food.carbs_g}}g carbs • {{food.fat_g}}g fat</div>
+                <div class="food-details">{{food.calories | number:'1.0-0'}} cal • {{food.protein_g | number:'1.0-0'}}g protein • {{food.carbs_g | number:'1.0-0'}}g carbs • {{food.fat_g | number:'1.0-0'}}g fat</div>
               </div>
               <button class="delete-btn" (click)="removeFood($index)">×</button>
             </div>
@@ -309,7 +309,7 @@
             
             <div class="exercise-summary">
               <div class="summary-total">
-                <strong>Total: {{getTotalExerciseTime()}} min • {{currentData.exercise_summary.total_burned_calories}} cal</strong>
+                <strong>Total: {{getTotalExerciseTime() | number:'1.0-0'}} min • {{currentData.exercise_summary.total_burned_calories | number:'1.0-0'}} cal</strong>
               </div>
             </div>
           </div>

@@ -23,23 +23,23 @@
 
     <div class="stat-card">
       <div class="stat-icon">🔥</div>
-      <div class="stat-value">{{yearlyStats.avgCalories}}</div>
+      <div class="stat-value">{{yearlyStats.avgCalories | number:'1.0-0'}}</div>
       <div class="stat-label">Avg Calories</div>
       <div class="additional-stats">
         <div class="additional-stat">
           <span class="additional-label">Total Calories:</span>
-          <span class="additional-value">{{getTotalCalories()}}</span>
+          <span class="additional-value">{{getTotalCalories() | number:'1.0-0'}}</span>
         </div>
         <div class="additional-stat">
           <span class="additional-label">Min Max:</span>
-          <span class="additional-value">{{getMinCalories()}}/{{getMaxCalories()}}</span>
+          <span class="additional-value">{{getMinCalories() | number:'1.0-0'}}/{{getMaxCalories() | number:'1.0-0'}}</span>
         </div>
       </div>
     </div>
 
     <div class="stat-card activity-analysis">
       <div class="stat-icon">🏃</div>
-      <div class="stat-value">{{getActivityScore()}}%</div>
+      <div class="stat-value">{{getActivityScore() | number:'1.0-0'}}%</div>
       <div class="stat-label">Activity Score</div>
       <div class="stat-sublabel">{{getActivityStatus()}}</div>
       <div class="additional-stats">
@@ -49,7 +49,7 @@
         </div>
         <div class="additional-stat">
           <span class="additional-label">Total Burned:</span>
-          <span class="additional-value">{{yearlyStats.totalBurned}} cal</span>
+          <span class="additional-value">{{yearlyStats.totalBurned | number:'1.0-0'}} cal</span>
         </div>
         <div class="additional-stat">
           <span class="additional-label">Best Month:</span>
@@ -60,33 +60,33 @@
 
     <div class="stat-card">
       <div class="stat-icon">🥛</div>
-      <div class="stat-value">{{yearlyStats.avgProtein}}g</div>
+      <div class="stat-value">{{yearlyStats.avgProtein | number:'1.0-0'}}g</div>
       <div class="stat-label">Avg Protein</div>
       <div class="additional-stats">
         <div class="additional-stat">
           <span class="additional-label">Total Protein:</span>
-          <span class="additional-value">{{getTotalProtein()}}g</span>
+          <span class="additional-value">{{getTotalProtein() | number:'1.0-0'}}g</span>
         </div>
         <div class="additional-stat">
           <span class="additional-label">Min Max:</span>
-          <span class="additional-value">{{getMinProtein()}}/{{getMaxProtein()}}g</span>
+          <span class="additional-value">{{getMinProtein() | number:'1.0-0'}}/{{getMaxProtein() | number:'1.0-0'}}g</span>
         </div>
       </div>
     </div>
 
     <div class="stat-card net-cal-analysis">
       <div class="stat-icon">💡</div>
-      <div class="stat-value" [class]="getDifferenceClass()">{{getCalorieDifference()}} cal</div>
+      <div class="stat-value" [class]="getDifferenceClass()">{{getCalorieDifference() | number:'1.0-0'}} cal</div>
       <div class="stat-label">Avg Net vs Goal</div>
       <div class="stat-sublabel">{{getNetCalorieRecommendation()}}</div>
       <div class="additional-stats">
         <div class="additional-stat">
           <span class="additional-label">Total Calories:</span>
-          <span class="additional-value">{{getTotalCalories()}}</span>
+          <span class="additional-value">{{getTotalCalories() | number:'1.0-0'}}</span>
         </div>
         <div class="additional-stat">
           <span class="additional-label">Est. Weight Loss:</span>
-          <span class="additional-value">{{getEstimatedWeightDecrease()}} kg</span>
+          <span class="additional-value">{{getEstimatedWeightDecrease() | number:'1.1-1'}} kg</span>
         </div>
       </div>
     </div>
@@ -102,7 +102,7 @@
             <span class="stat-text">days</span>
           </div>
           <div class="month-stat">
-            <span class="stat-number">{{month.avgCalories}}</span>
+            <span class="stat-number">{{month.avgCalories | number:'1.0-0'}}</span>
             <span class="stat-text">cal</span>
           </div>
         </div>
@@ -110,7 +110,7 @@
           <div class="progress-bar">
             <div class="progress-fill" [style.width.%]="month.completionRate"></div>
           </div>
-          <span class="progress-text">{{month.completionRate}}%</span>
+          <span class="progress-text">{{month.completionRate | number:'1.0-0'}}%</span>
         </div>
       </div>
     }

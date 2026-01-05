@@ -238,7 +238,8 @@ export class MonthDashboardComponent implements OnInit {
   }
 
   getAvgBurned(): number {
-    return this.monthlyStats.activeDays > 0 ? Math.round(this.monthlyStats.totalBurned / this.monthlyStats.activeDays) : 0;
+    const burnedValues = this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0).filter(val => val > 0);
+    return burnedValues.length > 0 ? Math.round(burnedValues.reduce((sum, val) => sum + val, 0) / burnedValues.length) : 0;
   }
 
   getMaxBurned(): number {
