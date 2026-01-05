@@ -474,6 +474,7 @@ export class DailyDashboardComponent implements OnInit {
       return;
     }
 
+    this.loading = true;
     try {
       const data = JSON.parse(this.jsonTextArea);
       data.last_update = new Date().toISOString();
@@ -483,14 +484,17 @@ export class DailyDashboardComponent implements OnInit {
           this.jsonTextArea = '';
           this.showJsonImport = false;
           this.updateSummary();
+          this.loading = false;
           this.showSuccessMessage('JSON data imported successfully!');
         },
         error: (err) => {
           console.error('Error importing JSON:', err);
+          this.loading = false;
           this.showErrorMessage('Error importing JSON data');
         }
       });
     } catch (error) {
+      this.loading = false;
       this.showErrorMessage('Invalid JSON format');
     }
   }
