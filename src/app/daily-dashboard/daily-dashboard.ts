@@ -483,7 +483,6 @@ export class DailyDashboardComponent implements OnInit {
           this.currentData = data;
           this.jsonTextArea = '';
           this.showJsonImport = false;
-          this.updateSummary();
           this.loading = false;
           this.showSuccessMessage('JSON data imported successfully!');
         },
