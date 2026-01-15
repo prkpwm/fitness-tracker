@@ -15,44 +15,33 @@ export class DataService {
   ) {}
 
   getFitnessDataByDate(date: string): Observable<FitnessData> {
-    return this.apiService.getFitnessDataByDate(date).pipe(
-      timeout(60000),
-      switchMap(apiData => {
-        return this.databaseService.getFitnessDataByDate(date).pipe(
-          map(dbData => {
-            if (dbData.last_update && apiData.last_update) {
-              const dbTime = new Date(dbData.last_update.replace(' ', 'T')).getTime();
-              const apiTime = new Date(apiData.last_update.replace(' ', 'T')).getTime();
-              if (dbTime > apiTime) {
-                return { data: dbData, source: 'database' };
-              }
-            }
-            return { data: apiData, source: 'api' };
+    return this.databaseService.getFitnessDataByDate(date).pipe(
+      switchMap(dbData => {
+        // Start API call in parallel
+        this.apiService.getFitnessDataByDate(date).pipe(
+          timeout(60000),
+          tap(apiData => {
+            // Update database with API data when it arrives
+            this.databaseService.createFitnessData(apiData).subscribe();
           }),
-          catchError(() => of({ data: apiData, source: 'api' }))
-        );
-      }),
-      tap(result => {
-        if (result.source === 'api') {
-          this.databaseService.createFitnessData(result.data).subscribe();
-        }
-      }),
-      map(result => result.data),
-      catchError((error) => {
-        if (error.status === 404 || error.status) {
-          return this.databaseService.getFitnessDataByDate(date).pipe(
-            tap(data => {
-              if (data.daily_total_stats.total_intake_calories != 0) {
-                this.apiService.createFitnessData(data).subscribe();
-              }
-            }),
-          );
-        }
-        return this.databaseService.getFitnessDataByDate(date).pipe(
-          tap(data => {
-            if (data.daily_total_stats.total_intake_calories != 0) {
-              this.apiService.createFitnessData(data).subscribe();
+          catchError(() => {
+            // If API fails, try to sync local data to API
+            if (dbData.daily_total_stats.total_intake_calories != 0) {
+              this.apiService.createFitnessData(dbData).subscribe();
             }
+            return of(null);
+          })
+        ).subscribe();
+        
+        // Return database data immediately
+        return of(dbData);
+      }),
+      catchError(() => {
+        // If database fails, try API
+        return this.apiService.getFitnessDataByDate(date).pipe(
+          timeout(60000),
+          tap(apiData => {
+            this.databaseService.createFitnessData(apiData).subscribe();
           })
         );
       })
@@ -74,35 +63,65 @@ export class DataService {
   }
 
   getFitnessDataByYear(year: number): Observable<FitnessData[]> {
-    return this.apiService.getFitnessDataByYear(year).pipe(
-      timeout(60000),
-      tap(data => {
-        data.forEach(item => {
-          this.databaseService.createFitnessData(item).subscribe();
-        });
+    return this.databaseService.getFitnessDataByYear(year).pipe(
+      switchMap(dbData => {
+        // Start API call in parallel
+        this.apiService.getFitnessDataByYear(year).pipe(
+          timeout(60000),
+          tap(apiData => {
+            // Update database with API data when it arrives
+            apiData.forEach(item => {
+              this.databaseService.createFitnessData(item).subscribe();
+            });
+          }),
+          catchError(() => of(null))
+        ).subscribe();
+        
+        // Return database data immediately
+        return of(dbData);
       }),
-      catchError((error) => {
-        if (error.status === 404 || error.status) {
-          return this.databaseService.getFitnessDataByYear(year);
-        }
-        return this.databaseService.getFitnessDataByYear(year);
+      catchError(() => {
+        // If database fails, try API
+        return this.apiService.getFitnessDataByYear(year).pipe(
+          timeout(60000),
+          tap(apiData => {
+            apiData.forEach(item => {
+              this.databaseService.createFitnessData(item).subscribe();
+            });
+          })
+        );
       })
     );
   }
 
   getFitnessDataByMonth(year: number, month: number): Observable<FitnessData[]> {
-    return this.apiService.getFitnessDataByMonth(year, month).pipe(
-      timeout(60000),
-      tap(data => {
-        data.forEach(item => {
-          this.databaseService.createFitnessData(item).subscribe();
-        });
+    return this.databaseService.getFitnessDataByMonth(year, month).pipe(
+      switchMap(dbData => {
+        // Start API call in parallel
+        this.apiService.getFitnessDataByMonth(year, month).pipe(
+          timeout(60000),
+          tap(apiData => {
+            // Update database with API data when it arrives
+            apiData.forEach(item => {
+              this.databaseService.createFitnessData(item).subscribe();
+            });
+          }),
+          catchError(() => of(null))
+        ).subscribe();
+        
+        // Return database data immediately
+        return of(dbData);
       }),
-      catchError((error) => {
-        if (error.status === 404 || error.status) {
-          return this.databaseService.getFitnessDataByMonth(year, month);
-        }
-        return this.databaseService.getFitnessDataByMonth(year, month);
+      catchError(() => {
+        // If database fails, try API
+        return this.apiService.getFitnessDataByMonth(year, month).pipe(
+          timeout(60000),
+          tap(apiData => {
+            apiData.forEach(item => {
+              this.databaseService.createFitnessData(item).subscribe();
+            });
+          })
+        );
       })
     );
   }
