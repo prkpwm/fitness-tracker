@@ -355,6 +355,24 @@
   .day-short {
     display: inline !important;
   }
+  
+  .month-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .month-nav-group {
+    position: static;
+    transform: none;
+  }
+  
+  .copy-api-btn {
+    width: 100%;
+  }
+  
+  .month-title {
+    font-size: 1.5rem;
+  }
 }
 
 .day-full {

@@ -294,6 +294,20 @@
   .year-title {
     font-size: 2rem;
   }
+  
+  .year-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .year-nav-group {
+    position: static;
+    transform: none;
+  }
+  
+  .copy-api-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -303,5 +317,9 @@
   
   .months-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .year-title {
+    font-size: 1.5rem;
   }
 }
