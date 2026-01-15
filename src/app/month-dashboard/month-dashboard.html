@@ -6,9 +6,12 @@
   </div>
   } @else {
   <div class="month-header">
-    <button class="month-nav" (click)="changeMonth(-1)">◀</button>
-    <h2 class="month-title">📅 {{getMonthName()}}</h2>
-    <button class="month-nav" (click)="changeMonth(1)">▶</button>
+    <div class="month-nav-group">
+      <button class="month-nav" (click)="changeMonth(-1)">◀</button>
+      <h2 class="month-title">📅 {{getMonthName()}}</h2>
+      <button class="month-nav" (click)="changeMonth(1)">▶</button>
+    </div>
+    <button class="copy-api-btn" (click)="copyRawApiResponse()" title="Export Raw API Response">📋 Export</button>
   </div>
 
   <div class="month-stats">

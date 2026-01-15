@@ -33,9 +33,17 @@
 .year-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 20px;
+  justify-content: space-between;
   margin-bottom: 30px;
+}
+
+.year-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .year-nav {
@@ -52,6 +60,22 @@
 
 .year-nav:hover {
   background: #45a049;
+}
+
+.copy-api-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-left: auto;
+}
+
+.copy-api-btn:hover {
+  background: #1976D2;
 }
 
 .year-title {

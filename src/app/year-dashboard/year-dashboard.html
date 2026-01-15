@@ -6,9 +6,12 @@
   </div>
   } @else {
   <div class="year-header">
-    <button class="year-nav" (click)="changeYear(-1)">◀</button>
-    <h2 class="year-title">📅 {{currentYear}}</h2>
-    <button class="year-nav" (click)="changeYear(1)">▶</button>
+    <div class="year-nav-group">
+      <button class="year-nav" (click)="changeYear(-1)">◀</button>
+      <h2 class="year-title">📅 {{currentYear}}</h2>
+      <button class="year-nav" (click)="changeYear(1)">▶</button>
+    </div>
+    <button class="copy-api-btn" (click)="copyRawApiResponse()" title="Export Raw API Response">📋 Export</button>
   </div>
 
   <div class="year-stats">

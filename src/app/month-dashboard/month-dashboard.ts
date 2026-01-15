@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
+import { MessageDialogComponent } from '../components/message-dialog.component';
 
 interface MonthlyStats {
   totalDays: number;
@@ -37,7 +39,7 @@ export class MonthDashboardComponent implements OnInit {
   };
   calendarDays: any[] = [];
 
-  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute) {}
+  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute, private dialog: MatDialog) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -249,5 +251,20 @@ export class MonthDashboardComponent implements OnInit {
   getMinBurned(): number {
     const burnedValues = this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0).filter(val => val > 0);
     return burnedValues.length > 0 ? Math.min(...burnedValues) : 0;
+  }
+
+  copyRawApiResponse() {
+    const jsonText = JSON.stringify(this.monthlyData, null, 2);
+    navigator.clipboard.writeText(jsonText).then(() => {
+      this.dialog.open(MessageDialogComponent, {
+        data: { message: 'Raw API response copied to clipboard!', type: 'success' },
+        width: '400px'
+      });
+    }).catch(() => {
+      this.dialog.open(MessageDialogComponent, {
+        data: { message: 'Failed to copy API response', type: 'error' },
+        width: '400px'
+      });
+    });
   }
 }

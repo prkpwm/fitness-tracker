@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
+import { MessageDialogComponent } from '../components/message-dialog.component';
 
 interface YearlyStats {
   totalActiveDays: number;
@@ -44,7 +46,7 @@ export class YearDashboardComponent implements OnInit {
   monthsData: MonthData[] = [];
   allYearData: FitnessData[] = [];
 
-  constructor(private dataService: DataService, private router: Router) {}
+  constructor(private dataService: DataService, private router: Router, private dialog: MatDialog) {}
 
   ngOnInit() {
     this.loadYearlyData();
@@ -203,5 +205,20 @@ export class YearDashboardComponent implements OnInit {
 
   getMaxProtein(): number {
     return this.allYearData.length > 0 ? Math.max(...this.allYearData.map(d => d.daily_total_stats.total_protein_g)) : 0;
+  }
+
+  copyRawApiResponse() {
+    const jsonText = JSON.stringify(this.allYearData, null, 2);
+    navigator.clipboard.writeText(jsonText).then(() => {
+      this.dialog.open(MessageDialogComponent, {
+        data: { message: 'Raw API response copied to clipboard!', type: 'success' },
+        width: '400px'
+      });
+    }).catch(() => {
+      this.dialog.open(MessageDialogComponent, {
+        data: { message: 'Failed to copy API response', type: 'error' },
+        width: '400px'
+      });
+    });
   }
 }
