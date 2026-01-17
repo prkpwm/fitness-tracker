@@ -28,6 +28,7 @@ interface MonthlyStats {
 export class MonthDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('calorieChart', { static: false }) calorieChart!: ElementRef<HTMLCanvasElement>;
   private chart: Chart<'line'> | null = null;
+  private chartInitialized = false;
   
   currentMonth = new Date();
   monthlyData: FitnessData[] = [];
@@ -80,9 +81,11 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
         this.monthlyData = allData;
         this.calculateStats();
         this.generateCalendar();
-        setTimeout(() => {
-          this.createChart();
-        }, 100);
+        if (!this.chartInitialized) {
+          setTimeout(() => {
+            this.createChart();
+          }, 100);
+        }
         this.loading = false;
       },
       error: () => {
@@ -162,6 +165,7 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
   }
 
   changeMonth(direction: number) {
+    this.chartInitialized = false;
     this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + direction, 1);
     this.loadMonthlyData();
   }
@@ -286,11 +290,13 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
   }
 
   createChart() {
-    if (!this.calorieChart?.nativeElement || this.monthlyData.length === 0) return;
+    if (!this.calorieChart?.nativeElement || this.monthlyData.length === 0 || this.chartInitialized) return;
     
     if (this.chart) {
       this.chart.destroy();
     }
+    
+    this.chartInitialized = true;
     
     const ctx = this.calorieChart.nativeElement.getContext('2d');
     if (!ctx) return;
