@@ -1,4 +1,5 @@
 export interface UserProfile {
+  age?: number;
   weight_kg: number;
   height_cm: number;
   goal_calories: number;

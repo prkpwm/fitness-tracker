@@ -332,6 +332,7 @@
               <button class="export-btn" (click)="exportData()">📤 Export</button>
               <button class="import-btn" (click)="importData()">📥 Import File</button>
               <button class="import-text-btn" (click)="showJsonImport = !showJsonImport">📝 Import Text</button>
+              <button class="struct-btn" (click)="copyStructure()">🏗️ Structure</button>
             </div>
           </div>
           <pre class="json-content" [hidden]="showJsonImport">{{getFormattedJson()}}</pre>

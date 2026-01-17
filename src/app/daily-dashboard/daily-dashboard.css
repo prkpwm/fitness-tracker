@@ -653,7 +653,16 @@
   }
 }
 
-.copy-btn, .export-btn, .import-btn, .import-text-btn {
+.struct-btn {
+  background: #8e44ad;
+  color: white;
+}
+
+.struct-btn:hover {
+  background: #7d3c98;
+}
+
+.copy-btn, .export-btn, .import-btn, .import-text-btn, .struct-btn {
   border: none;
   padding: 8px 16px;
   border-radius: 6px;

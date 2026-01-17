@@ -253,16 +253,30 @@ export class MonthDashboardComponent implements OnInit {
     return burnedValues.length > 0 ? Math.min(...burnedValues) : 0;
   }
 
+  convertToCompactFormat(): string {
+    return this.monthlyData.map(d => {
+      const foods = d.food_diary.map(f => `${f.item}:${f.calories}c/${f.protein_g}p/${f.carbs_g}cb/${f.fat_g}f`).join(';');
+      const exercises = Object.keys(d.exercise_summary).filter(k => k !== 'total_burned_calories').map(k => {
+        const ex = d.exercise_summary[k as keyof typeof d.exercise_summary] as any;
+        if (k.includes('cardio')) {
+          return `${ex.type}:${ex.duration_min}min/${ex.distance_mi}mi/${ex.calories_burned}cal`;
+        }
+        return `${ex.type}:${ex.duration_min}min/${ex.calories_burned}cal`;
+      }).join(';');
+      return `D:${d.date}|W:${d.user_profile.weight_kg}kg|G:${d.user_profile.goal_calories}|T:${d.daily_total_stats.total_intake_calories}/${d.daily_total_stats.total_protein_g}p/${d.daily_total_stats.total_carbs_g}c/${d.daily_total_stats.total_fat_g}f|B:${d.daily_total_stats.total_burned_calories}|N:${d.daily_total_stats.net_calories}|F:[${foods}]|E:[${exercises}]|A:${d.ai_evaluation.recommendation}`;
+    }).join('\n');
+  }
+
   copyRawApiResponse() {
-    const jsonText = JSON.stringify(this.monthlyData, null, 2);
-    navigator.clipboard.writeText(jsonText).then(() => {
+    const compactText = this.convertToCompactFormat();
+    navigator.clipboard.writeText(compactText).then(() => {
       this.dialog.open(MessageDialogComponent, {
-        data: { message: 'Raw API response copied to clipboard!', type: 'success' },
+        data: { message: 'Compact data copied to clipboard!', type: 'success' },
         width: '400px'
       });
     }).catch(() => {
       this.dialog.open(MessageDialogComponent, {
-        data: { message: 'Failed to copy API response', type: 'error' },
+        data: { message: 'Failed to copy data', type: 'error' },
         width: '400px'
       });
     });

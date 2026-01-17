@@ -9,6 +9,8 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MessageDialogComponent } from '../components/message-dialog.component';
 
+import { FITNESS_DATA_STRUCTURE } from '../constants/fitness-data-structure';
+
 @Component({
   selector: 'app-daily-dashboard',
   standalone: true,
@@ -52,13 +54,15 @@ export class DailyDashboardComponent implements OnInit {
   }
 
   changeDate(days: number) {
+    this.selectedDate = new Date(this.selectedDate);
     this.selectedDate.setDate(this.selectedDate.getDate() + days);
     this.selectedDateString = this.formatDateForInput(this.selectedDate);
     this.loadDataForDate();
   }
 
   onDateChange() {
-    this.selectedDate = new Date(this.selectedDateString);
+    this.selectedDate = new Date(this.selectedDateString + 'T00:00:00');
+    this.selectedDateString = this.formatDateForInput(this.selectedDate);
     this.loadDataForDate();
   }
 
@@ -193,7 +197,7 @@ export class DailyDashboardComponent implements OnInit {
           const sessionNum = key.replace('cardio_session_', '#');
           icon = '🏃';
           name = `${cardioExercise.type} ${sessionNum}`;
-          details = `${(cardioExercise.distance_mi * 1.60934).toFixed(2)} km • ${cardioExercise.duration_min} min • ${cardioExercise.calories_burned} cal`;
+          details = `${(cardioExercise.distance_mi * 1.60934).toFixed(2)} km • ${cardioExercise.duration_min} min • ${cardioExercise.calories_burned} cal${cardioExercise.avg_hr_bpm ? ` • ${cardioExercise.avg_hr_bpm} bpm` : ''}`;
         } else if (key === 'strength_training') {
           const strengthExercise = exercise as any;
           icon = '💪';
@@ -394,6 +398,14 @@ export class DailyDashboardComponent implements OnInit {
       this.showSuccessMessage('JSON copied to clipboard!', false);
     }).catch(() => {
       this.showErrorMessage('Failed to copy JSON');
+    });
+  }
+
+  copyStructure() {
+    navigator.clipboard.writeText(FITNESS_DATA_STRUCTURE).then(() => {
+      this.showSuccessMessage('Data structure copied to clipboard!', false);
+    }).catch(() => {
+      this.showErrorMessage('Failed to copy structure');
     });
   }
 
