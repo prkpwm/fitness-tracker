@@ -196,6 +196,7 @@
 
 .chart-wrapper canvas {
   max-height: 300px;
+  min-height: 300px;
 }
 
 .calendar-container {

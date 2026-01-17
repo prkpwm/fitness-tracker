@@ -357,8 +357,17 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
           }
         },
         scales: {
+          x: {
+            ticks: {
+              maxTicksLimit: window.innerWidth < 768 ? 8 : 15
+            }
+          },
           y: {
             beginAtZero: false,
+            ticks: {
+              stepSize: window.innerWidth < 768 ? 200 : 100,
+              maxTicksLimit: window.innerWidth < 768 ? 6 : 10
+            },
             title: {
               display: true,
               text: 'Calories'
