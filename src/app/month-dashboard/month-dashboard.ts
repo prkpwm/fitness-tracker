@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DataService } from '../services/data.service';
 import { FitnessData } from '../models/fitness.model';
 import { MessageDialogComponent } from '../components/message-dialog.component';
+import { Chart, registerables } from 'chart.js';
 
 interface MonthlyStats {
   totalDays: number;
@@ -24,7 +25,10 @@ interface MonthlyStats {
   templateUrl: './month-dashboard.html',
   styleUrls: ['./month-dashboard.css']
 })
-export class MonthDashboardComponent implements OnInit {
+export class MonthDashboardComponent implements OnInit, AfterViewInit {
+  @ViewChild('calorieChart', { static: false }) calorieChart!: ElementRef<HTMLCanvasElement>;
+  private chart: Chart<'line'> | null = null;
+  
   currentMonth = new Date();
   monthlyData: FitnessData[] = [];
   loading = false;
@@ -39,7 +43,9 @@ export class MonthDashboardComponent implements OnInit {
   };
   calendarDays: any[] = [];
 
-  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute, private dialog: MatDialog) {}
+  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute, private dialog: MatDialog) {
+    Chart.register(...registerables);
+  }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -74,12 +80,16 @@ export class MonthDashboardComponent implements OnInit {
         this.monthlyData = allData;
         this.calculateStats();
         this.generateCalendar();
+        setTimeout(() => {
+          this.createChart();
+        }, 100);
         this.loading = false;
       },
       error: () => {
         this.monthlyData = [];
         this.calculateStats();
         this.generateCalendar();
+        this.createChart();
         this.loading = false;
       }
     });
@@ -265,6 +275,92 @@ export class MonthDashboardComponent implements OnInit {
       }).join(';');
       return `D:${d.date}|W:${d.user_profile.weight_kg}kg|G:${d.user_profile.goal_calories}|T:${d.daily_total_stats.total_intake_calories}/${d.daily_total_stats.total_protein_g}p/${d.daily_total_stats.total_carbs_g}c/${d.daily_total_stats.total_fat_g}f|B:${d.daily_total_stats.total_burned_calories}|N:${d.daily_total_stats.net_calories}|F:[${foods}]|E:[${exercises}]|A:${d.ai_evaluation.recommendation}`;
     }).join('\n');
+  }
+
+  ngAfterViewInit() {
+    setTimeout(() => {
+      if (this.monthlyData.length > 0) {
+        this.createChart();
+      }
+    }, 500);
+  }
+
+  createChart() {
+    if (!this.calorieChart?.nativeElement || this.monthlyData.length === 0) return;
+    
+    if (this.chart) {
+      this.chart.destroy();
+    }
+    
+    const ctx = this.calorieChart.nativeElement.getContext('2d');
+    if (!ctx) return;
+    
+    this.chart = new Chart(ctx, {
+      type: 'line' as const,
+      data: {
+        labels: this.monthlyData.map(d => new Date(d.date).getDate()),
+        datasets: [{
+          label: 'Net Calories',
+          data: this.monthlyData.map(d => d.daily_total_stats.net_calories || 0),
+          borderColor: '#4CAF50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          pointBackgroundColor: this.monthlyData.map(d => {
+            const status = this.getStatusClass(d);
+            return status === 'deficit' ? '#f44336' : status === 'surplus' ? '#ff9800' : '#4CAF50';
+          }),
+          tension: 0.4
+        }, {
+          label: 'Recommended Intake',
+          data: this.monthlyData.map(d => d.user_profile.goal_calories || d.user_profile.recommended_daily_calories || 0),
+          borderColor: '#2196F3',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          pointRadius: 0,
+          tension: 0
+        }, {
+          label: 'TDEE',
+          data: this.monthlyData.map(d => d.user_profile.recommended_daily_calories || 2100),
+          borderColor: '#FF9800',
+          backgroundColor: 'transparent',
+          borderDash: [10, 5],
+          pointRadius: 0,
+          tension: 0
+        }, {
+          label: 'Min Intake (Weight Loss)',
+          data: this.monthlyData.map(d => d.user_profile.min_weight_loss_calories || 1200),
+          borderColor: '#f44336',
+          backgroundColor: 'transparent',
+          borderWidth: 3,
+          pointRadius: 0,
+          tension: 0
+        }, {
+          label: 'Max Intake (Weight Loss)',
+          data: this.monthlyData.map(d => d.user_profile.max_weight_loss_calories || 1800),
+          borderColor: '#e91e63',
+          backgroundColor: 'transparent',
+          borderWidth: 3,
+          pointRadius: 0,
+          tension: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: 'Calories'
+            }
+          }
+        }
+      }
+    });
   }
 
   copyRawApiResponse() {

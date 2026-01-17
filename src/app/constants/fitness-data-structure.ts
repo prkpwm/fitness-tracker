@@ -22,6 +22,8 @@ export const FITNESS_DATA_STRUCTURE = `# Fitness Data API Schema
 | goal_calories | number | ✓ | Daily calorie target |
 | maintenance_protein_target_g | number | ✓ | Protein target in grams |
 | recommended_daily_calories | number | ✓ | Recommended daily intake |
+| min_weight_loss_calories | number | ✓ | Minimum calories for weight loss |
+| max_weight_loss_calories | number | ✓| Maximum calories for weight loss |
 
 ## food_diary[]
 

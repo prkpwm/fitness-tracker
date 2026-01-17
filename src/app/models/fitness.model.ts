@@ -5,6 +5,8 @@ export interface UserProfile {
   goal_calories: number;
   maintenance_protein_target_g: number;
   recommended_daily_calories?: number;
+  min_weight_loss_calories?: number;
+  max_weight_loss_calories?: number;
 }
 
 export interface FoodItem {
