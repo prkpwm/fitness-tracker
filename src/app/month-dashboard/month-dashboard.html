@@ -125,7 +125,9 @@
           @if (!day.isEmpty) {
             <div class="day-number">{{day.day}}</div>
             @if (day.hasData) {
-              <div class="day-calories">{{day.data.daily_total_stats.total_intake_calories | number:'1.0-0'}}</div>
+              <div class="day-calories">In: {{day.data.daily_total_stats.total_intake_calories | number:'1.0-0'}}</div>
+              <div class="day-burn">Out: {{day.data.exercise_summary?.total_burned_calories || 0 | number:'1.0-0'}}</div>
+              <div class="day-net">Net: {{day.data.daily_total_stats.net_calories | number:'1.0-0'}}</div>
               <div class="day-indicator" [class]="day.status"></div>
             }
           }

@@ -306,6 +306,22 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
       data: {
         labels: this.monthlyData.map(d => new Date(d.date).getDate()),
         datasets: [{
+          label: 'Intake Calories',
+          data: this.monthlyData.map(d => d.daily_total_stats.total_intake_calories || 0),
+          borderColor: 'rgba(156, 39, 176, 0.4)',
+          backgroundColor: 'rgba(156, 39, 176, 0.2)',
+          tension: 0.4,
+          pointRadius: 1,
+          borderDash: [5, 10]
+        }, {
+          label: 'Burn Calories',
+          data: this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0),
+          borderColor: 'rgba(255, 87, 34, 0.4)',
+          backgroundColor: 'rgba(255, 87, 34, 0.2)',
+          tension: 0.4,
+          pointRadius: 1,
+          borderDash: [5, 10]
+        }, {
           label: 'Net Calories',
           data: this.monthlyData.map(d => d.daily_total_stats.net_calories || 0),
           borderColor: '#4CAF50',
@@ -314,13 +330,14 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
             const status = this.getStatusClass(d);
             return status === 'deficit' ? '#f44336' : status === 'surplus' ? '#ff9800' : '#4CAF50';
           }),
+          pointRadius: 1,
           tension: 0.4
         }, {
           label: 'Recommended Intake',
           data: this.monthlyData.map(d => d.user_profile.goal_calories || d.user_profile.recommended_daily_calories || 0),
           borderColor: '#2196F3',
           backgroundColor: 'transparent',
-          borderDash: [5, 5],
+          borderDash: [5, 20],
           pointRadius: 0,
           tension: 0
         }, {
@@ -330,23 +347,26 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
           backgroundColor: 'transparent',
           borderDash: [10, 5],
           pointRadius: 0,
-          tension: 0
+          tension: 0,
+          // hidden: true
         }, {
           label: 'Min Intake (Weight Loss)',
           data: this.monthlyData.map(d => d.user_profile.min_weight_loss_calories || 1200),
-          borderColor: '#f44336',
+          borderColor: 'rgba(244, 67, 54, 0.7)',
           backgroundColor: 'transparent',
           borderWidth: 3,
           pointRadius: 0,
-          tension: 0
+          tension: 0,
+          // hidden: true
         }, {
           label: 'Max Intake (Weight Loss)',
           data: this.monthlyData.map(d => d.user_profile.max_weight_loss_calories || 1800),
-          borderColor: '#e91e63',
+          borderColor: 'rgba(233, 30, 99, 0.7)',
           backgroundColor: 'transparent',
           borderWidth: 3,
           pointRadius: 0,
-          tension: 0
+          tension: 0,
+          // hidden: true
         }]
       },
       options: {

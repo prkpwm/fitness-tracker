@@ -260,6 +260,19 @@
   margin-top: 4px;
 }
 
+.day-burn {
+  font-size: 0.7rem;
+  color: #FF5722;
+  margin-top: 2px;
+}
+
+.day-net {
+  font-size: 0.7rem;
+  color: #4CAF50;
+  margin-top: 2px;
+  font-weight: bold;
+}
+
 .day-indicator {
   position: absolute;
   bottom: 4px;
@@ -361,6 +374,14 @@
   
   .day-calories {
     font-size: 0.7rem;
+  }
+  
+  .day-burn {
+    font-size: 0.6rem;
+  }
+  
+  .day-net {
+    font-size: 0.6rem;
   }
   
   .legend {
