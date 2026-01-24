@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, tap, switchMap, map, timeout } from 'rxjs/operators';
+import { catchError, tap, switchMap, timeout } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { DatabaseService } from './database.service';
 import { FitnessData } from '../models/fitness.model';
@@ -10,9 +10,37 @@ import { FitnessData } from '../models/fitness.model';
 })
 export class DataService {
   constructor(
-    private apiService: ApiService,
-    private databaseService: DatabaseService
+    private readonly apiService: ApiService,
+    private readonly databaseService: DatabaseService
   ) {}
+
+  private shouldReloadPage(apiData: FitnessData | FitnessData[], dbData: FitnessData | FitnessData[]): boolean {
+    if (Array.isArray(apiData) && Array.isArray(dbData)) {
+      // For arrays, check if any API item has newer lastUpdate than corresponding DB item
+      return apiData.some(apiItem => {
+        const dbItem = dbData.find(db => db.date === apiItem.date);
+        if (!dbItem || !apiItem.last_update) return false;
+        
+        const apiTime = new Date(apiItem.last_update).getTime();
+        const dbTime = dbItem.last_update ? new Date(dbItem.last_update).getTime() : 0;
+        return apiTime > dbTime;
+      });
+    } else if (!Array.isArray(apiData) && !Array.isArray(dbData)) {
+      // For single items
+      if (!apiData.last_update || !dbData.last_update) return false;
+      
+      const apiTime = new Date(apiData.last_update).getTime();
+      const dbTime = new Date(dbData.last_update).getTime();
+      return apiTime > dbTime;
+    }
+    return false;
+  }
+
+  private reloadPage(): void {
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000); // Small delay to ensure data is saved first
+  }
 
   getFitnessDataByDate(date: string): Observable<FitnessData> {
     return this.databaseService.getFitnessDataByDate(date).pipe(
@@ -23,10 +51,15 @@ export class DataService {
           tap(apiData => {
             // Update database with API data when it arrives
             this.databaseService.createFitnessData(apiData).subscribe();
+            
+            // Check if page should reload due to newer data
+            if (this.shouldReloadPage(apiData, dbData)) {
+              this.reloadPage();
+            }
           }),
           catchError(() => {
             // If API fails, try to sync local data to API
-            if (dbData.daily_total_stats.total_intake_calories != 0) {
+            if (dbData.daily_total_stats.total_intake_calories > 0) {
               this.apiService.createFitnessData(dbData).subscribe();
             }
             return of(null);
@@ -49,7 +82,7 @@ export class DataService {
   }
 
   createFitnessData(data: FitnessData): Observable<FitnessData> {
-    if (data.daily_total_stats.total_intake_calories != 0) {
+    if (data.daily_total_stats.total_intake_calories > 0) {
       return this.apiService.createFitnessData(data).pipe(
         timeout(60000),
         tap(result => {
@@ -73,6 +106,11 @@ export class DataService {
             apiData.forEach(item => {
               this.databaseService.createFitnessData(item).subscribe();
             });
+            
+            // Check if page should reload due to newer data
+            if (this.shouldReloadPage(apiData, dbData)) {
+              this.reloadPage();
+            }
           }),
           catchError(() => of(null))
         ).subscribe();
@@ -105,6 +143,11 @@ export class DataService {
             apiData.forEach(item => {
               this.databaseService.createFitnessData(item).subscribe();
             });
+            
+            // Check if page should reload due to newer data
+            if (this.shouldReloadPage(apiData, dbData)) {
+              this.reloadPage();
+            }
           }),
           catchError(() => of(null))
         ).subscribe();
