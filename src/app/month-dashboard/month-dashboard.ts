@@ -51,8 +51,13 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['year'] && params['month'] !== undefined) {
-        this.currentMonth = new Date(parseInt(params['year']), parseInt(params['month']), 1);
+        this.currentMonth = new Date(Number.parseInt(params['year']), Number.parseInt(params['month']), 1);
       }
+      this.loadMonthlyData();
+    });
+
+    // Subscribe to data updates from API
+    this.dataService.dataUpdate$.subscribe(() => {
       this.loadMonthlyData();
     });
   }

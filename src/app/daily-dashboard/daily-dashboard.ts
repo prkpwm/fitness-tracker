@@ -47,6 +47,11 @@ export class DailyDashboardComponent implements OnInit {
       this.selectedDateString = this.formatDateForInput(this.selectedDate);
       this.loadDataForDate();
     });
+
+    // Subscribe to data updates from API
+    this.dataService.dataUpdate$.subscribe(() => {
+      this.loadDataForDate();
+    });
   }
 
   formatDateForInput(date: Date): string {

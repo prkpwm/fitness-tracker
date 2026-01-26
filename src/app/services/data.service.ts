@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { catchError, tap, switchMap, timeout } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { DatabaseService } from './database.service';
@@ -9,6 +9,9 @@ import { FitnessData } from '../models/fitness.model';
   providedIn: 'root'
 })
 export class DataService {
+  private dataUpdateSubject = new Subject<void>();
+  public dataUpdate$ = this.dataUpdateSubject.asObservable();
+
   constructor(
     private readonly apiService: ApiService,
     private readonly databaseService: DatabaseService
@@ -36,9 +39,9 @@ export class DataService {
     return false;
   }
 
-  private reloadPage(): void {
+  private triggerDataUpdate(): void {
     setTimeout(() => {
-      window.location.reload();
+      this.dataUpdateSubject.next();
     }, 1000); // Small delay to ensure data is saved first
   }
 
@@ -54,7 +57,7 @@ export class DataService {
             
             // Check if page should reload due to newer data
             if (this.shouldReloadPage(apiData, dbData)) {
-              this.reloadPage();
+              this.triggerDataUpdate();
             }
           }),
           catchError(() => {
@@ -109,7 +112,7 @@ export class DataService {
             
             // Check if page should reload due to newer data
             if (this.shouldReloadPage(apiData, dbData)) {
-              this.reloadPage();
+              this.triggerDataUpdate();
             }
           }),
           catchError(() => of(null))
@@ -146,7 +149,7 @@ export class DataService {
             
             // Check if page should reload due to newer data
             if (this.shouldReloadPage(apiData, dbData)) {
-              this.reloadPage();
+              this.triggerDataUpdate();
             }
           }),
           catchError(() => of(null))

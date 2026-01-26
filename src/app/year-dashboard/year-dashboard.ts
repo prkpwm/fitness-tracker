@@ -50,6 +50,11 @@ export class YearDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadYearlyData();
+
+    // Subscribe to data updates from API
+    this.dataService.dataUpdate$.subscribe(() => {
+      this.loadYearlyData();
+    });
   }
 
   loadYearlyData() {
