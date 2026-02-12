@@ -16,8 +16,8 @@
  *   npm run turbo                    # Run lint and test in parallel
  *   npm run turbo -- --disable-lint  # Run only tests, skip linting
  *   npm run turbo -- --disable-cache # Ignore cache, run all tests
- *   npm run turbo -- --clear-cache   # Clear cache and run all tests (reset)
- *   npm run turbo -- --remove-cache  # Remove cache and exit (no tests)
+ *   npm run turbo -- --clear-cache   # Clear cache and run all tests
+ *   npm run turbo -- --git-push      # Run all cached files (for pre-push hook)
  */
 
 const { execSync, spawn } = require('child_process');
@@ -56,16 +56,16 @@ function filterErrorsByFile(fullError, filePath) {
   const lines = fullError.split('\n');
   const filteredLines = [];
   let inRelevantSection = false;
-  
+
   // Extract the TOTAL line first
   const totalLine = lines.find(line => line.includes('TOTAL:'));
   if (totalLine) {
     filteredLines.push(totalLine);
   }
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    
+
     // Start of a test failure - check if it's from our file
     if (line.includes('FAILED') && line.includes('Chrome Headless')) {
       // Check if this failure is from our file by looking at the next few lines
@@ -80,7 +80,7 @@ function filterErrorsByFile(fullError, filePath) {
           break;
         }
       }
-      
+
       if (isOurFile) {
         inRelevantSection = true;
         filteredLines.push(line);
@@ -89,7 +89,7 @@ function filterErrorsByFile(fullError, filePath) {
       }
       continue;
     }
-    
+
     // Execution summary line - check if it's for our file
     if (line.includes('Executed') && line.includes('Chrome Headless')) {
       // Only include if it mentions our file or if we're in a relevant section
@@ -99,7 +99,7 @@ function filterErrorsByFile(fullError, filePath) {
       inRelevantSection = false;
       continue;
     }
-    
+
     // If we're in a relevant section, capture the error details
     if (inRelevantSection) {
       // Skip lines that reference other spec files
@@ -107,16 +107,16 @@ function filterErrorsByFile(fullError, filePath) {
         inRelevantSection = false;
         continue;
       }
-      
+
       filteredLines.push(line);
     }
   }
-  
+
   // If no file-specific errors found, return the full error
   if (filteredLines.length <= 1) {
     return fullError;
   }
-  
+
   return filteredLines.join('\n');
 }
 
@@ -200,14 +200,13 @@ function getFileHash(filePath) {
  * Runs: git status --porcelain
  * Returns array of changed files with their status and type
  * 
- * If running from pre-push (no unstaged changes), checks all cached files instead
- * 
+ * @param {boolean} isGitPush - If true, loads all cached files when no git changes detected
  * @returns {Array} Array of change objects: { status, file, type }
  *   - status: Git status code (e.g., 'M ', 'A ', 'D ', '??')
  *   - file: Relative file path
- *   - type: 'modified' | 'added' | 'deleted' | 'renamed' | 'untracked'
+ *   - type: 'modified' | 'added' | 'deleted' | 'renamed' | 'untracked' | 'cached'
  */
-function detectGitChanges() {
+function detectGitChanges(isGitPush = false) {
   try {
     // Get git status in porcelain format
     const statusOutput = execSync('git status --porcelain', {
@@ -238,18 +237,19 @@ function detectGitChanges() {
         }
       });
     } else {
-      // No git changes detected - likely running from pre-push hook
-      // Check cache for all previously tested/linted files
-      const cache = loadCache();
-      const cachedFiles = Object.keys(cache).filter(key => !key.startsWith('source:'));
-      
-      cachedFiles.forEach(file => {
-        // Remove 'lint:' prefix if present
-        const cleanFile = file.startsWith('lint:') ? file.substring(5) : file;
-        changes.push({ status: 'M ', file: cleanFile, type: 'cached' });
-      });
-    }
+      // No git changes detected - check if running from pre-push hook
+      if (isGitPush) {
+        // Check cache for all previously tested/linted files
+        const cache = loadCache();
+        const cachedFiles = Object.keys(cache).filter(key => !key.startsWith('source:'));
 
+        cachedFiles.forEach(file => {
+          // Remove 'lint:' prefix if present
+          const cleanFile = file.startsWith('lint:') ? file.substring(5) : file;
+          changes.push({ status: 'M ', file: cleanFile, type: 'cached' });
+        });
+      }
+    }
     return changes;
   } catch (error) {
     console.error(colorize('❌ Error detecting git changes:', 'red'), error);
@@ -270,22 +270,22 @@ function detectGitChanges() {
  */
 function getSpecFiles(changes, cache = {}) {
   const allSpecFiles = new Set();
-  
+
   changes.forEach((change) => {
     const file = change.file;
-    
+
     // Add explicit .spec.ts files
     if (file.endsWith('.spec.ts')) {
       allSpecFiles.add(file);
     }
-    
+
     // If a .ts file changed (not spec), add its corresponding .spec.ts
     if (file.endsWith('.ts') && !file.endsWith('.spec.ts')) {
       const specFile = file.replace('.ts', '.spec.ts');
       allSpecFiles.add(specFile);
     }
   });
-  
+
   // Filter to only files that exist
   const existingSpecFiles = Array.from(allSpecFiles).filter((file) => {
     try {
@@ -303,7 +303,7 @@ function getSpecFiles(changes, cache = {}) {
   existingSpecFiles.forEach((file) => {
     const currentHash = getFileHash(file);
     const cachedEntry = cache[file];
-    
+
     // Also check if the source file (.ts) changed
     const sourceFile = file.replace('.spec.ts', '.ts');
     const sourceHash = getFileHash(sourceFile);
@@ -345,17 +345,17 @@ function generateLintCommand(changes, cache = {}) {
   if (changes.length === 0) {
     return { command: null, toRun: [], cached: [] };
   }
-  
+
   const allFilesToLint = new Set();
-  
+
   changes.forEach((change) => {
     const file = change.file;
-    
+
     if (file.endsWith('.html') || file.endsWith('.ts')) {
       allFilesToLint.add(file);
     }
   });
-  
+
   if (allFilesToLint.size === 0) {
     return { command: null, toRun: [], cached: [] };
   }
@@ -388,17 +388,17 @@ function generateLintCommand(changes, cache = {}) {
   }
 
   if (toRun.length === 0) {
-    return { command: null, toRun, cached,allFilesToLint };
+    return { command: null, toRun, cached, allFilesToLint };
   }
-  
+
   console.log(colorize('📝 Linting files:', 'cyan'));
   toRun.forEach((file) => {
     console.log(colorize(`  ├─ ${file}`, 'dim'));
   });
-  
-  const filesList = toRun.join(' ');
-  return { 
-    command: `npx eslint ${filesList} --fix`,
+
+  const filesPattern = toRun.map((file) => `"${file}"`).join(' ');
+  return {
+    command: `eslint ${filesPattern} --fix --cache`,
     toRun,
     cached,
     allFilesToLint
@@ -421,7 +421,7 @@ function generateLintCommand(changes, cache = {}) {
  * @param {Array} cachedFiles - Array of cached .spec.ts file paths
  * @returns {string|null} ng test command string or null if no spec files
  */
-function generateNgTestCommand(specFiles, cachedFiles = [],lintResult= {}) {
+function generateNgTestCommand(specFiles, cachedFiles = [], lintResult = {}) {
   if (specFiles.length === 0 && cachedFiles.length === 0) {
     return null;
   }
@@ -469,23 +469,21 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
   const startTime = Date.now();
   const cache = disableCache ? {} : loadCache();
   const { toRun: specFilesToRun, cached: cachedSpecFiles } = getSpecFiles(changes, disableCache ? {} : cache);
-  
+
   const lintResult = disableLint ? { command: null, toRun: [], cached: [] } : generateLintCommand(changes, disableCache ? {} : cache);
-  const testCmd = generateNgTestCommand(specFilesToRun, disableCache ? [] : cachedSpecFiles , lintResult);
-  
+  const testCmd = generateNgTestCommand(specFilesToRun, disableCache ? [] : cachedSpecFiles, lintResult);
+
   // If all tests and lints are cached, show success
   if (!lintResult.command && !testCmd && (cachedSpecFiles.length > 0 || lintResult.cached.length > 0)) {
     console.log(colorize('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'blue'));
     console.log(colorize('✨ TURBO TEST - All cached!', 'bright'));
     console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
-    
     let hasFailures = false;
-    
     if (lintResult.cached.length > 0) {
       // Count passed vs failed lint files
       const lintPassedFiles = [];
       const lintFailedFiles = [];
-      
+
       lintResult.cached.forEach(file => {
         const entry = cache[`lint:${file}`];
         if (entry && entry.status === 'passed') {
@@ -495,7 +493,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           hasFailures = true;
         }
       });
-      
+
       if (lintPassedFiles.length > 0 && lintFailedFiles.length === 0) {
         console.log(colorize(`💾 ${lintPassedFiles.length} lint file(s) cached (all passing)`, 'green'));
       } else if (lintPassedFiles.length > 0 && lintFailedFiles.length > 0) {
@@ -518,12 +516,12 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
         });
       }
     }
-    
+
     if (cachedSpecFiles.length > 0) {
       // Count passed vs failed test files
       const testPassedFiles = [];
       const testFailedFiles = [];
-      
+
       cachedSpecFiles.forEach(file => {
         const entry = cache[file];
         if (entry && entry.status === 'passed') {
@@ -533,7 +531,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           hasFailures = true;
         }
       });
-      
+
       if (testPassedFiles.length > 0 && testFailedFiles.length === 0) {
         console.log(colorize(`💾 ${testPassedFiles.length} test(s) cached (all passing)`, 'green'));
       } else if (testPassedFiles.length > 0 && testFailedFiles.length > 0) {
@@ -556,24 +554,25 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
         });
       }
     }
-    
+
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(colorize(`⏱️  Total time: ${duration}s`, 'cyan'));
     console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
-    
+
     // Exit with code 1 if there are cached failures, 0 if all passed
+
     process.exit(hasFailures ? 1 : 0);
   }
-  
+
   if (!lintResult.command && !testCmd) {
     console.log(colorize('⚠️  No files found to process.', 'yellow'));
     return;
   }
-  
+
   console.log(colorize('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'blue'));
   console.log(colorize('🚀 TURBO TEST - Running in parallel...', 'bright'));
   console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
-  
+
   const processes = [];
   let completed = 0;
   let failed = false;
@@ -584,7 +583,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
     lint: lintResult.toRun,
     test: specFilesToRun
   };
-  
+
   // Helper function to kill all processes and their children
   const killAllProcesses = () => {
     processes.forEach(({ process: proc }) => {
@@ -603,115 +602,115 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
       }
     });
   };
-  
+
   // Start lint process
   if (lintResult.command) {
     console.log(colorize('▶️  [1/2] Starting Lint...', 'yellow'));
     console.log(colorize(`   Command: ${lintResult.command}`, 'dim'));
     const lintProcess = spawn(lintResult.command, { stdio: 'pipe', shell: true });
     errorOutputs['Lint'] = '';
-    
+
     lintProcess.stderr.on('data', (data) => {
       errorOutputs['Lint'] += data.toString();
       process.stderr.write(data);
     });
-    
+
     lintProcess.stdout.on('data', (data) => {
       const output = data.toString();
       errorOutputs['Lint'] += output;
       process.stdout.write(data);
     });
-    
+
     processes.push({ name: 'Lint', process: lintProcess });
   }
-  
+
   // Start test process
   if (testCmd) {
     console.log(colorize(`▶️  [${lintResult.command ? '2/2' : '1/1'}] Starting Tests...`, 'yellow'));
     console.log(colorize(`   Command: ${testCmd}`, 'dim'));
     const testProcess = spawn(testCmd, { stdio: 'pipe', shell: true });
     errorOutputs['Test'] = '';
-    
+
     testProcess.stderr.on('data', (data) => {
       errorOutputs['Test'] += data.toString();
       process.stderr.write(data);
     });
-    
+
     testProcess.stdout.on('data', (data) => {
       const output = data.toString();
       errorOutputs['Test'] += output;
       process.stdout.write(data);
     });
-    
+
     processes.push({ name: 'Test', process: testProcess });
   }
-  
+
   console.log('');
-  
+
   // Wait for all processes to complete
   processes.forEach(({ name, process: proc }) => {
     proc.on('close', (code) => {
       completed++;
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      
+
       if (code !== 0) {
         failed = true;
         results[name] = 'FAILED';
         const errorMsg = errorOutputs[name]?.trim() || `Process exited with code ${code}`;
-        
+
         // For tests, try to extract test summary (TOTAL, FAILED, SUCCESS)
         if (name === 'Test') {
           const summaryMatch = errorMsg.match(/TOTAL:\s*(\d+)\s*FAILED,\s*(\d+)\s*SUCCESS/);
-          
+
           if (summaryMatch) {
             const failedCount = summaryMatch[1];
             const successCount = summaryMatch[2];
             const total = Number.parseInt(failedCount) + Number.parseInt(successCount);
-            
+
             // Extract complete error section - everything from first FAILED to TOTAL summary
             const lines = errorMsg.split('\n');
             const errorSection = [];
             let captureErrors = false;
-            
+
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
-              
+
               // Start capturing when we see first FAILED test
               if (line.includes('FAILED') && !line.includes('Coverage') && !line.includes('TOTAL:') && !captureErrors) {
                 captureErrors = true;
               }
-              
+
               // Stop capturing when we hit the final TOTAL summary or Coverage
               if (captureErrors && (line.includes('TOTAL:') || line.includes('Coverage summary'))) {
                 break;
               }
-              
+
               // Capture all lines in the error section
               if (captureErrors) {
                 errorSection.push(line);
               }
             }
-            
+
             // Build the complete error message
             let summary = `TOTAL: ${total}, FAILED: ${failedCount}, SUCCESS: ${successCount}`;
             if (errorSection.length > 0) {
               summary += '\n' + errorSection.join('\n');
             }
-            
+
             failureReasons[name] = summary;
           } else {
             // Check for TypeScript compilation errors
             const hasCompilationError = errorMsg.includes('[ERROR] TS') || errorMsg.includes('Application bundle generation failed');
-            
+
             if (hasCompilationError) {
               // Extract TS error messages - simpler approach
               const tsErrorLines = [];
               const lines = errorMsg.split('\n');
-              
+
               // Debug: log first few lines to see format
               // console.log('DEBUG - First 20 lines:');
               // lines.slice(0, 20).forEach((l, i) => console.log(`${i}: ${l}`));
-              
+
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 // Look for lines containing [ERROR] TS
@@ -724,7 +723,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                   if (cleanError) {
                     tsErrorLines.push(cleanError);
                   }
-                  
+
                   // Get the file location from next few lines
                   for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
                     const nextLine = lines[j].trim();
@@ -735,12 +734,12 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                       break;
                     }
                   }
-                  
+
                   // Limit to first 3 errors
                   if (tsErrorLines.length >= 6) break;
                 }
               }
-              
+
               if (tsErrorLines.length > 0) {
                 failureReasons[name] = tsErrorLines.join('\n');
               } else {
@@ -751,7 +750,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
             } else {
               // Test output doesn't have expected summary format - something went wrong
               const errorLines = errorMsg.split('\n').filter(line => line.trim() && !line.includes('Building'));
-              
+
               // Check if output looks incomplete (ends with "Building..." or similar)
               if (errorMsg.includes('Building') || errorLines.length === 0) {
                 failureReasons[name] = 'Test execution incomplete or interrupted';
@@ -762,20 +761,20 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
               }
             }
           }
-          
+
           // Cache failed tests too (so we don't retry until file changes)
           // BUT skip caching if test was interrupted/incomplete
           const shouldCache = failureReasons[name] && !failureReasons[name].includes('Test execution incomplete or interrupted');
-          
+
           if (shouldCache) {
             // For compilation errors, only cache files that are explicitly mentioned in the error
             const hasCompilationError = errorMsg.includes('[ERROR] TS') || errorMsg.includes('Application bundle generation failed');
-            
+
             if (hasCompilationError) {
               // Extract all file paths mentioned in the error message
               const errorLines = errorMsg.split('\n');
               const filesInError = new Set();
-              
+
               errorLines.forEach(line => {
                 // Match file paths in format: src/path/to/file.ts or src/path/to/file.spec.ts
                 const fileMatch = line.match(/(src\/[^\s:]+\.(?:spec\.)?ts)/g);
@@ -783,14 +782,14 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                   fileMatch.forEach(f => filesInError.add(f));
                 }
               });
-              
+
               // Only cache files that are mentioned in the error AND are in our test list
               filesToCache.test.forEach((file) => {
                 if (filesInError.has(file)) {
                   const hash = getFileHash(file);
                   if (hash) {
                     const fileSpecificError = filterErrorsByFile(failureReasons[name] || 'Test failed', file);
-                    
+
                     cache[file] = {
                       hash,
                       status: 'failed',
@@ -798,7 +797,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                       error: fileSpecificError,
                     };
                   }
-                  
+
                   // Also cache the source file hash
                   const sourceFile = file.replace('.spec.ts', '.ts');
                   const sourceHash = getFileHash(sourceFile);
@@ -819,7 +818,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                   // Filter error message to only include errors from this specific file
                   const fullError = failureReasons[name] || 'Test failed';
                   const fileSpecificError = filterErrorsByFile(fullError, file);
-                  
+
                   cache[file] = {
                     hash,
                     status: 'failed',
@@ -827,7 +826,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                     error: fileSpecificError,
                   };
                 }
-                
+
                 // Also cache the source file hash
                 const sourceFile = file.replace('.spec.ts', '.ts');
                 const sourceHash = getFileHash(sourceFile);
@@ -845,22 +844,22 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
         } else {
           // For lint, extract error details
           const errorLines = errorMsg.split('\n').filter(line => line.trim());
-          
+
           // Find lines with actual errors (containing "error" or "warning")
-          const errorDetailLines = errorLines.filter(line => 
-            line.includes('error') || 
-            line.includes('warning') || 
+          const errorDetailLines = errorLines.filter(line =>
+            line.includes('error') ||
+            line.includes('warning') ||
             line.includes('✖') ||
             line.match(/^\d+:\d+/)  // Line:column format
           );
-          
+
           // If we found specific errors, show them; otherwise show last few lines
-          const summary = errorDetailLines.length > 0 
+          const summary = errorDetailLines.length > 0
             ? errorDetailLines.join('\n')
             : errorLines.slice(-5).join('\n');
-          
+
           failureReasons[name] = summary;
-          
+
           // For lint, we need to parse which specific files failed
           // Extract file paths from error output (format: "path/to/file.ts")
           const failedFiles = new Set();
@@ -881,7 +880,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
               failedFiles.add(filePath);
             }
           });
-          
+
           // Cache lint results - only mark files as failed if they're in the error output
           filesToCache.lint.forEach((file) => {
             const hash = getFileHash(file);
@@ -897,9 +896,9 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           });
           saveCache(cache);
         }
-        
+
         console.error(colorize(`\n❌ ${name} failed`, 'red'));
-        
+
         // Kill all other processes immediately on failure
         console.log(colorize('🛑 Stopping all processes...', 'yellow'));
         killAllProcesses();
@@ -930,7 +929,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
                 timestamp: Date.now(),
               };
             }
-            
+
             // Also cache the source file hash
             const sourceFile = file.replace('.spec.ts', '.ts');
             const sourceHash = getFileHash(sourceFile);
@@ -945,7 +944,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           saveCache(cache);
         }
       }
-      
+
       // Exit when all processes are done
       if (completed === processes.length) {
         console.log(colorize('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'blue'));
@@ -967,13 +966,13 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
             }
           }
         });
-        
+
         // Show cache stats
         if (lintResult.cached.length > 0) {
           // Count passed vs failed lint files
           const lintPassedFiles = [];
           const lintFailedFiles = [];
-          
+
           lintResult.cached.forEach(file => {
             const entry = cache[`lint:${file}`];
             if (entry && entry.status === 'passed') {
@@ -982,7 +981,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
               lintFailedFiles.push({ file, error: entry.error });
             }
           });
-          
+
           if (lintPassedFiles.length > 0 && lintFailedFiles.length === 0) {
             console.log(colorize(`💾 Lint Cached: ${lintPassedFiles.length} file(s) skipped (all passing)`, 'cyan'));
           } else if (lintPassedFiles.length > 0 && lintFailedFiles.length > 0) {
@@ -1005,12 +1004,12 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
             });
           }
         }
-        
+
         if (cachedSpecFiles.length > 0) {
           // Count passed vs failed test files
           const testPassedFiles = [];
           const testFailedFiles = [];
-          
+
           cachedSpecFiles.forEach(file => {
             const entry = cache[file];
             if (entry && entry.status === 'passed') {
@@ -1019,7 +1018,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
               testFailedFiles.push({ file, error: entry.error });
             }
           });
-          
+
           if (testPassedFiles.length > 0 && testFailedFiles.length === 0) {
             console.log(colorize(`💾 Test Cached: ${testPassedFiles.length} test(s) skipped (all passing)`, 'cyan'));
           } else if (testPassedFiles.length > 0 && testFailedFiles.length > 0) {
@@ -1042,11 +1041,11 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
             });
           }
         }
-        
+
         console.log(colorize(`⏱️  Total time: ${duration}s`, 'cyan'));
         console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
-        
-        // Exit with code 1 if any process failed, 0 if all passed
+
+        // Exit with code 1 if there are any failures, 0 if all passed
         process.exit(failed ? 1 : 0);
       }
     });
@@ -1057,7 +1056,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
 // Parses command line arguments and runs the turbo test workflow
 if (require.main === module) {
   const args = process.argv.slice(2);
-  
+
   // Show help
   if (args.includes('--help') || args.includes('-h')) {
     console.log(colorize('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'blue'));
@@ -1068,7 +1067,7 @@ if (require.main === module) {
     console.log('  npm run turbo -- --disable-lint   # Skip linting, run only tests');
     console.log('  npm run turbo -- --disable-cache  # Ignore cache, run all tests');
     console.log('  npm run turbo -- --clear-cache    # Clear cache and run all tests');
-    console.log('  npm run turbo -- --remove-cache   # Remove cache and exit (no tests)');
+    console.log('  npm run turbo -- --git-push       # Run all cached files (for pre-push hook)');
     console.log('  npm run turbo -- --help           # Show this help message\n');
     console.log(colorize('FEATURES:', 'bright'));
     console.log('  ✓ Parallel execution (lint + test run simultaneously)');
@@ -1083,11 +1082,12 @@ if (require.main === module) {
     console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
     process.exit(0);
   }
-  
+
   const disableLint = args.includes('--disable-lint');
+  const disableCache = args.includes('--disable-cache');
   const shouldClearCache = args.includes('--clear-cache');
   const shouldRemoveCache = args.includes('--remove-cache');
-  const disableCache = args.includes('--disable-cache');
+  const isGitPush = args.includes('--git-push');
   
   if (shouldRemoveCache) {
     clearCache();
@@ -1097,8 +1097,8 @@ if (require.main === module) {
   if (shouldClearCache) {
     clearCache();
   }
-  
-  const changes = detectGitChanges();
+
+  const changes = detectGitChanges(isGitPush);
   // Debug: log actual file paths
   if (args.includes('--debug')) {
     console.log('DEBUG - Detected changes:');

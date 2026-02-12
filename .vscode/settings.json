@@ -1,0 +1,10 @@
+{
+  "git.allowNoVerifyCommit": false,
+  "git.alwaysSignOff": false,
+  "git.enableCommitSigning": false,
+  "git.postCommitCommand": "none",
+  "git.showPushSuccessNotification": true,
+  "git.terminalGitEditor": false,
+  "git.useIntegratedAskPass": true,
+  "git.allowNoVerifyPush": false
+}
