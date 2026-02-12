@@ -10,7 +10,8 @@
     "build:prod": "ng build --configuration production",
     "deploy": "ng build --configuration production --base-href /fitness-tracker/",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "turbo": "node turbo-test.config.js"
   },
   "prettier": {
     "printWidth": 100,
