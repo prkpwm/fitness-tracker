@@ -22,6 +22,7 @@ describe('AppComponent', () => {
   });
 
   it('should fail intentionally to test pre-push hook', () => {
+    // This test will fail to verify pre-push hook
     expect(true).toBe(false);
   });
 });
