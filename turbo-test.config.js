@@ -199,6 +199,8 @@ function getFileHash(filePath) {
  * Runs: git status --porcelain
  * Returns array of changed files with their status and type
  * 
+ * If running from pre-push (no unstaged changes), checks all cached files instead
+ * 
  * @returns {Array} Array of change objects: { status, file, type }
  *   - status: Git status code (e.g., 'M ', 'A ', 'D ', '??')
  *   - file: Relative file path
@@ -233,6 +235,17 @@ function detectGitChanges() {
         if (file) {
           changes.push({ status, file, type });
         }
+      });
+    } else {
+      // No git changes detected - likely running from pre-push hook
+      // Check cache for all previously tested/linted files
+      const cache = loadCache();
+      const cachedFiles = Object.keys(cache).filter(key => !key.startsWith('source:'));
+      
+      cachedFiles.forEach(file => {
+        // Remove 'lint:' prefix if present
+        const cleanFile = file.startsWith('lint:') ? file.substring(5) : file;
+        changes.push({ status: 'M ', file: cleanFile, type: 'cached' });
       });
     }
 
