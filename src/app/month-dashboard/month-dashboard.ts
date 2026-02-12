@@ -1,10 +1,10 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, type OnInit, type AfterViewInit, ViewChild, type ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
-import { DataService } from '../services/data.service';
-import { FitnessData } from '../models/fitness.model';
+import { type Router, type ActivatedRoute } from '@angular/router';
+import { type MatDialog } from '@angular/material/dialog';
+import { type DataService } from '../services/data.service';
+import { type FitnessData } from '../models/fitness.model';
 import { MessageDialogComponent } from '../components/message-dialog.component';
 import { Chart, registerables } from 'chart.js';
 
@@ -42,7 +42,13 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
     bestDay: '',
     worstDay: ''
   };
-  calendarDays: any[] = [];
+  calendarDays: {
+    day: string | number;
+    data: FitnessData | null;
+    isEmpty: boolean;
+    hasData?: boolean;
+    status?: string;
+  }[] = [];
 
   constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute, private dialog: MatDialog) {
     Chart.register(...registerables);
@@ -65,7 +71,6 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
   loadMonthlyData() {
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     // Reset data and stats
     this.monthlyData = [];
@@ -111,7 +116,7 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
     
     const totalCalories = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_intake_calories, 0);
     const totalProtein = this.monthlyData.reduce((sum, data) => sum + data.daily_total_stats.total_protein_g, 0);
-    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise_summary?.total_burned_calories || 0, 0);
+    this.monthlyStats.totalBurned = this.monthlyData.reduce((sum, data) => sum + data.exercise_summary.total_burned_calories || 0, 0);
     
     this.monthlyStats.avgCalories = Math.round(totalCalories / this.monthlyStats.activeDays);
     this.monthlyStats.avgProtein = Math.round(totalProtein / this.monthlyStats.activeDays);
@@ -183,7 +188,7 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
     return Math.round((this.monthlyStats.activeDays / this.monthlyStats.totalDays) * 100);
   }
 
-  onDateClick(day: any) {
+  onDateClick(day: { isEmpty: boolean; day: number }) {
     if (!day.isEmpty) {
       const year = this.currentMonth.getFullYear();
       const month = this.currentMonth.getMonth();
@@ -210,7 +215,9 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
 
   getDifferenceClass(): string {
     const diff = this.getCalorieDifference();
-    return diff < 0 ? 'good' : diff > 200 ? 'high' : 'moderate';
+    if (diff < 0) return 'good';
+    if (diff > 200) return 'high';
+    return 'moderate';
   }
 
   getNetCalorieRecommendation(): string {
@@ -259,16 +266,16 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getAvgBurned(): number {
-    const burnedValues = this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0).filter(val => val > 0);
+    const burnedValues = this.monthlyData.map(d => d.exercise_summary.total_burned_calories || 0).filter(val => val > 0);
     return burnedValues.length > 0 ? Math.round(burnedValues.reduce((sum, val) => sum + val, 0) / burnedValues.length) : 0;
   }
 
   getMaxBurned(): number {
-    return this.monthlyData.length > 0 ? Math.max(...this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0)) : 0;
+    return this.monthlyData.length > 0 ? Math.max(...this.monthlyData.map(d => d.exercise_summary.total_burned_calories || 0)) : 0;
   }
 
   getMinBurned(): number {
-    const burnedValues = this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0).filter(val => val > 0);
+    const burnedValues = this.monthlyData.map(d => d.exercise_summary.total_burned_calories || 0).filter(val => val > 0);
     return burnedValues.length > 0 ? Math.min(...burnedValues) : 0;
   }
 
@@ -276,11 +283,14 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
     return this.monthlyData.map(d => {
       const foods = d.food_diary.map(f => `${f.item}:${f.calories}c/${f.protein_g}p/${f.carbs_g}cb/${f.fat_g}f`).join(';');
       const exercises = Object.keys(d.exercise_summary).filter(k => k !== 'total_burned_calories').map(k => {
-        const ex = d.exercise_summary[k as keyof typeof d.exercise_summary] as any;
+        const ex = d.exercise_summary[k as keyof typeof d.exercise_summary];
+        if (!ex) return '';
         if (k.includes('cardio')) {
-          return `${ex.type}:${ex.duration_min}min/${ex.distance_mi}mi/${ex.calories_burned}cal`;
+          const cardioEx = ex as { type: string; duration_min: number; distance_mi: number; calories_burned: number };
+          return `${cardioEx.type}:${cardioEx.duration_min}min/${cardioEx.distance_mi}mi/${cardioEx.calories_burned}cal`;
         }
-        return `${ex.type}:${ex.duration_min}min/${ex.calories_burned}cal`;
+        const strengthEx = ex as { type: string; duration_min: number; calories_burned: number };
+        return `${strengthEx.type}:${strengthEx.duration_min}min/${strengthEx.calories_burned}cal`;
       }).join(';');
       return `D:${d.date}|W:${d.user_profile.weight_kg}kg|G:${d.user_profile.goal_calories}|T:${d.daily_total_stats.total_intake_calories}/${d.daily_total_stats.total_protein_g}p/${d.daily_total_stats.total_carbs_g}c/${d.daily_total_stats.total_fat_g}f|B:${d.daily_total_stats.total_burned_calories}|N:${d.daily_total_stats.net_calories}|F:[${foods}]|E:[${exercises}]|A:${d.ai_evaluation.recommendation}`;
     }).join('\n');
@@ -294,8 +304,26 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
     }, 500);
   }
 
+  private splitComplexChartLogic() {
+    const getPointColor = (status: string): string => {
+      if (status === 'deficit') return '#f44336';
+      if (status === 'surplus') return '#ff9800';
+      return '#4CAF50';
+    };
+
+    return this.monthlyData.map(d => getPointColor(this.getStatusClass(d)));
+  }
+
+  private isChartReady(): boolean {
+    if (!this.calorieChart) return false;
+    const hasCanvas = !!this.calorieChart.nativeElement;
+    const hasData = this.monthlyData.length > 0;
+    const notInitialized = !this.chartInitialized;
+    return hasCanvas && hasData && notInitialized;
+  }
+
   createChart() {
-    if (!this.calorieChart?.nativeElement || this.monthlyData.length === 0 || this.chartInitialized) return;
+    if (!this.isChartReady()) return;
     
     if (this.chart) {
       this.chart.destroy();
@@ -320,7 +348,7 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
           borderDash: [5, 10]
         }, {
           label: 'Burn Calories',
-          data: this.monthlyData.map(d => d.exercise_summary?.total_burned_calories || 0),
+          data: this.monthlyData.map(d => d.exercise_summary.total_burned_calories || 0),
           borderColor: 'rgba(255, 87, 34, 0.4)',
           backgroundColor: 'rgba(255, 87, 34, 0.2)',
           tension: 0.4,
@@ -331,10 +359,7 @@ export class MonthDashboardComponent implements OnInit, AfterViewInit {
           data: this.monthlyData.map(d => d.daily_total_stats.net_calories || 0),
           borderColor: '#4CAF50',
           backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          pointBackgroundColor: this.monthlyData.map(d => {
-            const status = this.getStatusClass(d);
-            return status === 'deficit' ? '#f44336' : status === 'surplus' ? '#ff9800' : '#4CAF50';
-          }),
+          pointBackgroundColor: this.splitComplexChartLogic(),
           pointRadius: 1,
           tension: 0.4
         }, {

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, Subject } from 'rxjs';
+import { type Observable, of, Subject } from 'rxjs';
 import { catchError, tap, switchMap, timeout } from 'rxjs/operators';
-import { ApiService } from './api.service';
-import { DatabaseService } from './database.service';
-import { FitnessData } from '../models/fitness.model';
+import { type ApiService } from './api.service';
+import { type DatabaseService } from './database.service';
+import { type FitnessData } from '../models/fitness.model';
 
 @Injectable({
   providedIn: 'root'

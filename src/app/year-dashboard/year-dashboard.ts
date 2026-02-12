@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, type OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
-import { DataService } from '../services/data.service';
-import { FitnessData } from '../models/fitness.model';
+import { type Router } from '@angular/router';
+import { type MatDialog } from '@angular/material/dialog';
+import { type DataService } from '../services/data.service';
+import { type FitnessData } from '../models/fitness.model';
 import { MessageDialogComponent } from '../components/message-dialog.component';
 
 interface YearlyStats {
@@ -107,22 +107,22 @@ export class YearDashboardComponent implements OnInit {
     };
   }
 
-  calculateYearlyStats(allData: FitnessData[]) {
-    if (allData.length === 0) {
+  calculateYearlyStats(yearData: FitnessData[]) {
+    if (yearData.length === 0) {
       this.loading = false;
       return;
     }
 
-    this.yearlyStats.totalActiveDays = allData.length;
-    this.yearlyStats.avgCalories = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_intake_calories, 0) / allData.length);
-    this.yearlyStats.avgProtein = Math.round(allData.reduce((sum, d) => sum + d.daily_total_stats.total_protein_g, 0) / allData.length);
-    this.yearlyStats.totalBurned = allData.reduce((sum, d) => sum + d.exercise_summary?.total_burned_calories || 0, 0);
+    this.yearlyStats.totalActiveDays = yearData.length;
+    this.yearlyStats.avgCalories = Math.round(yearData.reduce((sum, d) => sum + d.daily_total_stats.total_intake_calories, 0) / yearData.length);
+    this.yearlyStats.avgProtein = Math.round(yearData.reduce((sum, d) => sum + d.daily_total_stats.total_protein_g, 0) / yearData.length);
+    this.yearlyStats.totalBurned = yearData.reduce((sum, d) => sum + d.exercise_summary.total_burned_calories || 0, 0);
     
     const totalDaysInYear = new Date(this.currentYear, 11, 31).getDate() === 31 ? 365 : 366;
     this.yearlyStats.completionRate = Math.round((this.yearlyStats.totalActiveDays / totalDaysInYear) * 100);
 
     // Store all data for min/max calculations
-    this.allYearData = allData;
+    this.allYearData = yearData;
 
     // Find best month
     const bestMonth = this.monthsData.reduce((best, current) => 
@@ -143,7 +143,6 @@ export class YearDashboardComponent implements OnInit {
 
   getRecommendedCalories(): number {
     // Use first available data point for user profile
-    const allData = this.monthsData.flatMap(m => m);
     return 2000; // Default fallback - could be enhanced to get from user profile
   }
 
@@ -160,7 +159,9 @@ export class YearDashboardComponent implements OnInit {
 
   getDifferenceClass(): string {
     const diff = this.getCalorieDifference();
-    return diff < 0 ? 'good' : diff > 200 ? 'high' : 'moderate';
+    if (diff < 0) return 'good';
+    if (diff > 200) return 'high';
+    return 'moderate';
   }
 
   getNetCalorieRecommendation(): string {

@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { type Routes } from '@angular/router';
 import { DailyDashboardComponent } from './daily-dashboard/daily-dashboard';
 import { MonthDashboardComponent } from './month-dashboard/month-dashboard';
 import { YearDashboardComponent } from './year-dashboard/year-dashboard';

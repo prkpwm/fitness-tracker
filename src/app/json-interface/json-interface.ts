@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService } from '../services/database.service';
+import { type DatabaseService } from '../services/database.service';
 
 @Component({
   selector: 'app-json-interface',

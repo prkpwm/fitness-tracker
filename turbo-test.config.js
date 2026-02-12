@@ -382,9 +382,9 @@ function generateLintCommand(changes, cache = {}) {
     console.log(colorize(`  ├─ ${file}`, 'dim'));
   });
   
-  const filesPattern = toRun.map((file) => `--lint-file-patterns "${file}"`).join(' ');
+  const filesList = toRun.join(' ');
   return { 
-    command: `ng lint ${filesPattern} --fix --cache`,
+    command: `npx eslint ${filesList} --fix`,
     toRun,
     cached,
     allFilesToLint

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, from, of } from 'rxjs';
-import { FitnessData } from '../models/fitness.model';
+import { type HttpClient } from '@angular/common/http';
+import { type Observable, from } from 'rxjs';
+import { type FitnessData } from '../models/fitness.model';
 
 @Injectable({
   providedIn: 'root'
@@ -144,7 +144,7 @@ export class DatabaseService {
     });
   }
 
-  private async checkAndAddSampleData(clear: boolean = false): Promise<void> {
+  private async checkAndAddSampleData(clear = false): Promise<void> {
     try {
       if (clear) {
         await this.clearAllData();
@@ -197,7 +197,7 @@ export class DatabaseService {
         
         await this.saveData(sampleData);
       }
-    } catch (error) {
+    } catch {
       // Silent error handling
     }
   }
@@ -214,4 +214,6 @@ export class DatabaseService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  clearDatabase = false;
 }
