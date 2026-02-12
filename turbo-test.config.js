@@ -465,6 +465,8 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
     console.log(colorize('✨ TURBO TEST - All cached!', 'bright'));
     console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
     
+    let hasFailures = false;
+    
     if (lintResult.cached.length > 0) {
       // Count passed vs failed lint files
       const lintPassedFiles = [];
@@ -476,6 +478,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           lintPassedFiles.push(file);
         } else if (entry && entry.status === 'failed') {
           lintFailedFiles.push({ file, error: entry.error });
+          hasFailures = true;
         }
       });
       
@@ -513,6 +516,7 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
           testPassedFiles.push(file);
         } else if (entry && entry.status === 'failed') {
           testFailedFiles.push({ file, error: entry.error });
+          hasFailures = true;
         }
       });
       
@@ -542,7 +546,9 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(colorize(`⏱️  Total time: ${duration}s`, 'cyan'));
     console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
-    return;
+    
+    // Exit with code 1 if there are cached failures, 0 if all passed
+    process.exit(hasFailures ? 1 : 0);
   }
   
   if (!lintResult.command && !testCmd) {
@@ -1026,9 +1032,8 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
         console.log(colorize(`⏱️  Total time: ${duration}s`, 'cyan'));
         console.log(colorize('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n', 'blue'));
         
-        if (failed) {
-          process.exit(1);
-        }
+        // Exit with code 1 if any process failed, 0 if all passed
+        process.exit(failed ? 1 : 0);
       }
     });
   });
