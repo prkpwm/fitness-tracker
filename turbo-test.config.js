@@ -16,7 +16,8 @@
  *   npm run turbo                    # Run lint and test in parallel
  *   npm run turbo -- --disable-lint  # Run only tests, skip linting
  *   npm run turbo -- --disable-cache # Ignore cache, run all tests
- *   npm run turbo -- --clear-cache   # Clear cache and run all tests
+ *   npm run turbo -- --clear-cache   # Clear cache and run all tests (reset)
+ *   npm run turbo -- --remove-cache  # Remove cache and exit (no tests)
  */
 
 const { execSync, spawn } = require('child_process');
@@ -1067,6 +1068,7 @@ if (require.main === module) {
     console.log('  npm run turbo -- --disable-lint   # Skip linting, run only tests');
     console.log('  npm run turbo -- --disable-cache  # Ignore cache, run all tests');
     console.log('  npm run turbo -- --clear-cache    # Clear cache and run all tests');
+    console.log('  npm run turbo -- --remove-cache   # Remove cache and exit (no tests)');
     console.log('  npm run turbo -- --help           # Show this help message\n');
     console.log(colorize('FEATURES:', 'bright'));
     console.log('  ✓ Parallel execution (lint + test run simultaneously)');
@@ -1084,7 +1086,13 @@ if (require.main === module) {
   
   const disableLint = args.includes('--disable-lint');
   const shouldClearCache = args.includes('--clear-cache');
+  const shouldRemoveCache = args.includes('--remove-cache');
   const disableCache = args.includes('--disable-cache');
+  
+  if (shouldRemoveCache) {
+    clearCache();
+    process.exit(0);
+  }
   
   if (shouldClearCache) {
     clearCache();
