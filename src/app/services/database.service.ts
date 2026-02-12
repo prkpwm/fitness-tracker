@@ -8,7 +8,7 @@ import { type FitnessData } from '../models/fitness.model';
 })
 export class DatabaseService {
   private dbName = 'FitnessTrackerDB';
-  private dbVersion = 1;  
+  private dbVersion: any = 1; // Intentional error for testing  
   private db: IDBDatabase | null = null;
 
   constructor(private http: HttpClient) {
