@@ -444,7 +444,7 @@ function generateNgTestCommand(specFiles, cachedFiles = [], lintResult = {}) {
     console.log(colorize(`  ├─ ${file}`, 'dim'));
   });
   const includePattern = specFiles.map((file) => `--include=${file}`).join(' ');
-  return `ng test ${includePattern} --watch=false --karma-config=karma-parallel.conf.js`;
+  return `ng test ${includePattern} --watch=false`;
 }
 
 /**
