@@ -239,14 +239,38 @@ function detectGitChanges(isGitPush = false) {
     } else {
       // No git changes detected - check if running from pre-push hook
       if (isGitPush) {
-        // Check cache for all previously tested/linted files
+        // Get files from unpushed commits (committed locally but not pushed to remote)
+        try {
+          const unpushedOutput = execSync('git log @{u}.. --name-only --pretty=format:', {
+            encoding: 'utf-8',
+          }).trim();
+
+          if (unpushedOutput) {
+            const unpushedFiles = unpushedOutput.split('\n').filter(f => f.trim());
+            const uniqueFiles = [...new Set(unpushedFiles)];
+
+            uniqueFiles.forEach(file => {
+              if (file) {
+                changes.push({ status: 'M ', file, type: 'unpushed' });
+              }
+            });
+          }
+        } catch (error) {
+          // If no upstream branch or error, fall back to cache
+          console.warn(colorize('⚠️  No upstream branch found, using cache instead', 'yellow'));
+        }
+
+        // Also check cache for all previously tested/linted files
         const cache = loadCache();
         const cachedFiles = Object.keys(cache).filter(key => !key.startsWith('source:'));
 
         cachedFiles.forEach(file => {
           // Remove 'lint:' prefix if present
           const cleanFile = file.startsWith('lint:') ? file.substring(5) : file;
-          changes.push({ status: 'M ', file: cleanFile, type: 'cached' });
+          // Only add if not already in changes (avoid duplicates from unpushed commits)
+          if (!changes.some(c => c.file === cleanFile)) {
+            changes.push({ status: 'M ', file: cleanFile, type: 'cached' });
+          }
         });
       }
     }
@@ -396,9 +420,10 @@ function generateLintCommand(changes, cache = {}) {
     console.log(colorize(`  ├─ ${file}`, 'dim'));
   });
 
+  // Use ESLint directly instead of ng lint (Angular 21 doesn't have ng lint)
   const filesPattern = toRun.map((file) => `"${file}"`).join(' ');
   return {
-    command: `eslint ${filesPattern} --fix --cache`,
+    command: `npx eslint ${filesPattern} --fix --cache`,
     toRun,
     cached,
     allFilesToLint
@@ -654,12 +679,52 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
       if (code !== 0) {
-        failed = true;
-        results[name] = 'FAILED';
         const errorMsg = errorOutputs[name]?.trim() || `Process exited with code ${code}`;
 
-        // For tests, try to extract test summary (TOTAL, FAILED, SUCCESS)
-        if (name === 'Test') {
+        // Check for karma-parallel empty shard error (should be treated as pass)
+        // BUT only if it's the ONLY failure (TOTAL: 1 FAILED)
+        const isKarmaParallelEmptyShardError = name === 'Test' && 
+          errorMsg.includes('[karma-parallel]') && 
+          errorMsg.includes('Add single test to prevent failure should prevent on this shard failing by having successful tests FAILED') &&
+          errorMsg.includes('Spec has no expectations') &&
+          errorMsg.includes('TOTAL: 1 FAILED');
+
+        if (isKarmaParallelEmptyShardError) {
+          // Treat as pass - this is just karma-parallel's empty shard placeholder
+          results[name] = 'PASSED';
+          console.log(colorize(`\n✅ ${name} completed successfully (karma-parallel empty shard ignored)`, 'green'));
+
+          // Update cache for passed files
+          if (filesToCache.test.length > 0) {
+            filesToCache.test.forEach((file) => {
+              const hash = getFileHash(file);
+              if (hash) {
+                cache[file] = {
+                  hash,
+                  status: 'passed',
+                  timestamp: Date.now(),
+                };
+              }
+
+              // Also cache the source file hash
+              const sourceFile = file.replace('.spec.ts', '.ts');
+              const sourceHash = getFileHash(sourceFile);
+              if (sourceHash) {
+                cache[`source:${sourceFile}`] = {
+                  hash: sourceHash,
+                  status: 'passed',
+                  timestamp: Date.now(),
+                };
+              }
+            });
+            saveCache(cache);
+          }
+        } else {
+          failed = true;
+          results[name] = 'FAILED';
+
+          // For tests, try to extract test summary (TOTAL, FAILED, SUCCESS)
+          if (name === 'Test') {
           const summaryMatch = errorMsg.match(/TOTAL:\s*(\d+)\s*FAILED,\s*(\d+)\s*SUCCESS/);
 
           if (summaryMatch) {
@@ -895,13 +960,14 @@ function executeParallelCommands(changes, disableLint = false, disableCache = fa
             }
           });
           saveCache(cache);
+          }
+
+          console.error(colorize(`\n❌ ${name} failed`, 'red'));
+
+          // Kill all other processes immediately on failure
+          console.log(colorize('🛑 Stopping all processes...', 'yellow'));
+          killAllProcesses();
         }
-
-        console.error(colorize(`\n❌ ${name} failed`, 'red'));
-
-        // Kill all other processes immediately on failure
-        console.log(colorize('🛑 Stopping all processes...', 'yellow'));
-        killAllProcesses();
       } else {
         results[name] = 'PASSED';
         console.log(colorize(`\n✅ ${name} completed successfully`, 'green'));

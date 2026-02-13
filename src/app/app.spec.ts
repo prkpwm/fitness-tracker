@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AppComponent } from './app';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -14,15 +16,14 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render navigation tabs', async () => {
     const fixture = TestBed.createComponent(AppComponent);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, fitness-frontend');
-  });
-
-  it('should fail intentionally to test pre-push hook', () => {
-    // This test will fail to verify pre-push hook
-    expect(true).toBe(false);
+    const navTabs = compiled.querySelectorAll('.nav-tab');
+    expect(navTabs.length).toBe(3);
+    expect(navTabs[0].textContent?.trim()).toContain('Daily View');
+    expect(navTabs[1].textContent?.trim()).toContain('Monthly View');
+    expect(navTabs[2].textContent?.trim()).toContain('Yearly View');
   });
 });
